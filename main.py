@@ -1,8 +1,10 @@
+"""This project is a program designed for analyzing text files."""
 from functionality import AnalysisText, ProgramState, EmptyFileError
 import sys
 
 
 def show_info_commands():
+    """Shows information about available commands."""
     return ("1. '__enter_file__' for enter new file;\n"
             "2. '__save_file__' to save file;\n"
             "3. '__close_program__' to close program;\n"
@@ -17,6 +19,7 @@ def show_info_commands():
 
 
 def user_command_handler(command: str, obj_text: AnalysisText, state: ProgramState):
+    """Handles user commands."""
     command_dict = {
         '__save_file__': obj_text.save_text,
         '__list_words__': obj_text.show_list_words,
@@ -54,10 +57,12 @@ def user_command_handler(command: str, obj_text: AnalysisText, state: ProgramSta
 
 
 def parse_input(user_input: str):
+    """Processes the user input string."""
     return user_input.strip()
 
 
 def main():
+    """The main script for user interaction."""
     state = ProgramState()
     obj_text = None
     while True:
