@@ -4,7 +4,7 @@
 
 2. Enter word for search: (1. Word for search,
                            2. '__enter_file__' to enter new file,
-                           3. '__save_file__' to save file,
+                           3. '__save_to_pickle__' to save in pickle file,
                            4. '__close_program__' to close program,
                            5. '__list_words__' to show all unique words,
                            6. '__case_sens__' to show the status case sensitive,

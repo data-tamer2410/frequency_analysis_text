@@ -1,12 +1,12 @@
 """This project is a program designed for analyzing text files."""
-from functionality import AnalysisText, ProgramState, EmptyFileError
+from functionality import AnalysisText, ProgramState, EmptyFileError, InvalidFileFormatError
 import sys
 
 
 def show_info_commands():
     """Shows information about available commands."""
     return ("1. '__enter_file__' for enter new file;\n"
-            "2. '__save_file__' to save file;\n"
+            "2. '__save_to_pickle__' to save in pickle file;\n"
             "3. '__close_program__' to close program;\n"
             "4. '__list_words__' to show all unique words;\n"
             "5. '__case_sens__' to show the status case sensitive;\n"
@@ -21,11 +21,11 @@ def show_info_commands():
 def user_command_handler(command: str, obj_text: AnalysisText, state: ProgramState):
     """Handles user commands."""
     command_dict = {
-        '__save_file__': obj_text.save_text,
+        '__save_to_json__': obj_text.save_file_to_json,
+        '__save_to_pickle__': obj_text.save_file_to_pickle,
         '__list_words__': obj_text.show_list_words,
         '__help__': show_info_commands,
         '__close_program__': sys.exit
-
     }
 
     if command == '__enter_file__':
@@ -34,9 +34,13 @@ def user_command_handler(command: str, obj_text: AnalysisText, state: ProgramSta
         obj_text.smart_mode = False
         print(f'Smart mode off.')
     elif command == '__smart_mode_on__':
-        obj_text.smart_mode = True
-        print(f'Smart mode on{", case sensitive off." if obj_text.case_sensitive else "."}')
-        obj_text.case_sensitive = False
+        if obj_text.language in obj_text.support_language:
+            obj_text.smart_mode = True
+            print(f'Smart mode on{", case sensitive off." if obj_text.case_sensitive else "."}')
+            obj_text.case_sensitive = False
+        else:
+            print(f'At the moment the mode "__smart_mode__" only supports {obj_text.support_language} languages,'
+                  f' your text is in the {obj_text.language} language.')
     elif command == '__smart_mode__':
         print(f'Smart mode: {"on." if obj_text.smart_mode else "off."}')
     elif command == '__case_sens_on__':
@@ -70,7 +74,7 @@ def main():
             try:
                 user_path = parse_input(input('Enter path to file:'))
                 obj_text = AnalysisText(user_path)
-                obj_text.load_text()
+                obj_text.load_file()
                 obj_text.analyze_text()
                 print(obj_text)
                 state.enter_new_file = False
@@ -78,10 +82,13 @@ def main():
                 print('File not found or access denied.')
                 continue
             except IOError as e:
-                print(f'An I/O error occurred: {e}')
+                print(f'An I/O error occurred: {e}.')
                 continue
-            except EmptyFileError as e:
+            except (EmptyFileError, InvalidFileFormatError) as e:
                 print(e)
+                continue
+            except (AttributeError, KeyError):
+                print('The file is corrupted.')
                 continue
 
         command = parse_input(input('Enter word for search or command:'))
