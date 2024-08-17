@@ -44,6 +44,7 @@ class AnalysisText:
         self.datetime_created = None
         self.language = None
         self.search_cache = {}
+        self.search_cache_keys = []
 
     def load_pickle_file(self):
         with open(self.path, 'rb') as file:
@@ -53,6 +54,7 @@ class AnalysisText:
             self.datetime_created = copy.deepcopy(obj.datetime_created)
             self.language = copy.deepcopy(obj.language)
             self.search_cache = copy.deepcopy(obj.search_cache)
+            self.search_cache_keys = copy.deepcopy(obj.search_cache_keys)
 
     def load_json_file(self):
         with open(self.path, 'r', encoding='utf-8') as file:
@@ -60,9 +62,10 @@ class AnalysisText:
             self.text = copy.deepcopy(data['text'])
             self.result_counter = copy.deepcopy(data['result_counter'])
             self.datetime_created = datetime.datetime.strptime(copy.deepcopy(data['datetime_created']),
-                                                               '%Y-%m-%d %H:%M:%S')
+                                                               '%Y-%m-%d %H:%M:%S.%f')
             self.language = copy.deepcopy(data['language'])
             self.search_cache = copy.deepcopy(data['search_cache'])
+            self.search_cache_keys = copy.deepcopy(data['search_cache_keys'])
 
     def load_txt_file(self):
         self.new_file = True
@@ -78,10 +81,11 @@ class AnalysisText:
             self.load_json_file()
         elif suffix == '.txt':
             self.load_txt_file()
+            self.analyze_txt_file()
         else:
             raise InvalidFileFormatError
 
-    def analyze_text(self):
+    def analyze_txt_file(self):
         """Analyzes the text to determine word and number frequencies."""
         if self.new_file:
             pattern = r'\b\w+\b|\b\d+\b|\b\d+\.\d+\b'
@@ -93,7 +97,7 @@ class AnalysisText:
             self.language, _ = langid.classify(self.text)
 
     def save_file_to_pickle(self):
-        path, mess = self.get_path('.pkl')
+        path, mess = self.get_path_to_save('.pkl')
         with open(path, 'wb') as file:
             pickle.dump(self, file)
         return mess
@@ -101,15 +105,16 @@ class AnalysisText:
     def save_file_to_json(self):
         data = {'text': self.text,
                 'result_counter': self.result_counter,
-                'datetime_created': self.datetime_created.strftime('%Y-%m-%d %H:%M:%S'),
+                'datetime_created': self.datetime_created.strftime('%Y-%m-%d %H:%M:%S.%f'),
                 'language': self.language,
-                'search_cache': self.search_cache}
-        path, mess = self.get_path('.json')
+                'search_cache': self.search_cache,
+                'search_cache_keys': self.search_cache_keys}
+        path, mess = self.get_path_to_save('.json')
         with open(path, 'w', encoding='utf-8') as file:
             json.dump(data, file, ensure_ascii=False, indent=4)
         return mess
 
-    def get_path(self, suffix):
+    def get_path_to_save(self, suffix):
         """Saves the analysis results to a file."""
         file_name = self.path.stem
         path = f'{self.datetime_created.date()}_{file_name}{suffix}'
@@ -150,6 +155,13 @@ class AnalysisText:
             return pattern, text
         return f'\\b{re.escape(word)}\\b', text
 
+    def save_cache(self, search_key, res):
+        if len(self.search_cache) > 500:
+            key = self.search_cache_keys.pop(0)
+            del self.search_cache[key]
+        self.search_cache_keys.append(search_key)
+        self.search_cache[search_key] = res
+
     def search_word(self, word):
         """Searches for a word in the text using cache."""
         pattern, text = self.get_pattern_and_text(word)
@@ -166,7 +178,7 @@ class AnalysisText:
                 res += f'{n_row}: {all_orig_rows_in_text[n_row - 1]}\n'
         if not res:
             return f'"{word}" - not exist in text.'
-        self.search_cache[search_key] = res
+        self.save_cache(search_key, res)
         return res
 
     def show_list_words(self):

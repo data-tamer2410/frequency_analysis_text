@@ -1,21 +1,23 @@
 """This project is a program designed for analyzing text files."""
-from functionality import AnalysisText, ProgramState, EmptyFileError, InvalidFileFormatError
+from frequency_analysis_text.functionality import AnalysisText, ProgramState, EmptyFileError, \
+    InvalidFileFormatError
 import sys
 
 
 def show_info_commands():
     """Shows information about available commands."""
-    return ("1. '__enter_file__' for enter new file;\n"
-            "2. '__save_to_pickle__' to save in pickle file;\n"
-            "3. '__close_program__' to close program;\n"
-            "4. '__list_words__' to show all unique words;\n"
-            "5. '__case_sens__' to show the status case sensitive;\n"
-            "6. '__case_sens_on__' to on case sensitive;\n"
-            "7. '__case_sens_off__' to off case sensitive;\n"
-            "8. '__help__' to show information about commands;\n"
-            "9. '__smart_mode__' to show the status smart mode;\n"
-            "10. '__smart_mode_on__' to on the ability to search for words not only as individual words;\n"
-            "11. '__smart_mode_off__' to off the ability to search for words not only as individual words.")
+    return ("1. '__help__' to show information about commands;\n"
+            "2. '__enter_file__' for enter new file;\n"
+            "3. '__list_words__' to show all unique words;\n"
+            "4. '__case_sens__' to show the status case sensitive;\n"
+            "5. '__case_sens_on__' to on case sensitive;\n"
+            "6. '__case_sens_off__' to off case sensitive;\n"
+            "7. '__smart_mode__' to show the status smart mode;\n"
+            "8. '__smart_mode_on__' to on the ability to search for words not only as individual words;\n"
+            "9. '__smart_mode_off__' to off the ability to search for words not only as individual words;\n"
+            "10. '__close_program__' to close program;\n"
+            "11. '__save_to_pickle__' to save in pickle file;\n"
+            "12. '__save_to_json__' to save in json file.")
 
 
 def user_command_handler(command: str, obj_text: AnalysisText, state: ProgramState):
@@ -75,7 +77,6 @@ def main():
                 user_path = parse_input(input('Enter path to file:'))
                 obj_text = AnalysisText(user_path)
                 obj_text.load_file()
-                obj_text.analyze_text()
                 print(obj_text)
                 state.enter_new_file = False
             except (PermissionError, FileNotFoundError):
