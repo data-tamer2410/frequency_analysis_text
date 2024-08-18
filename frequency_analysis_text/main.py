@@ -6,65 +6,70 @@ import sys
 
 def show_info_commands():
     """Shows information about available commands."""
-    return ("1. '__help__' to show information about commands;\n"
-            "2. '__enter_file__' for enter new file;\n"
-            "3. '__list_words__' to show all unique words;\n"
-            "4. '__case_sens__' to show the status case sensitive;\n"
-            "5. '__case_sens_on__' to on case sensitive;\n"
-            "6. '__case_sens_off__' to off case sensitive;\n"
-            "7. '__smart_mode__' to show the status smart mode;\n"
-            "8. '__smart_mode_on__' to on the ability to search for words not only as individual words;\n"
-            "9. '__smart_mode_off__' to off the ability to search for words not only as individual words;\n"
-            "10. '__close_program__' to close program;\n"
-            "11. '__save_to_pickle__' to save in pickle file;\n"
-            "12. '__save_to_json__' to save in json file.")
-
-
-def user_command_handler(command: str, obj_text: AnalysisText, state: ProgramState):
-    """Handles user commands."""
-    command_dict = {
-        '__save_to_json__': obj_text.save_file_to_json,
-        '__save_to_pickle__': obj_text.save_file_to_pickle,
-        '__list_words__': obj_text.show_list_words,
-        '__help__': show_info_commands,
-        '__close_program__': sys.exit
-    }
-
-    if command == '__enter_file__':
-        state.enter_new_file = True
-    elif command == '__smart_mode_off__':
-        obj_text.smart_mode = False
-        print(f'Smart mode off.')
-    elif command == '__smart_mode_on__':
-        if obj_text.language in obj_text.support_language:
-            obj_text.smart_mode = True
-            print(f'Smart mode on{", case sensitive off." if obj_text.case_sensitive else "."}')
-            obj_text.case_sensitive = False
-        else:
-            print(f'At the moment the mode "__smart_mode__" only supports {obj_text.support_language} languages,'
-                  f' your text is in the {obj_text.language} language.')
-    elif command == '__smart_mode__':
-        print(f'Smart mode: {"on." if obj_text.smart_mode else "off."}')
-    elif command == '__case_sens_on__':
-        obj_text.case_sensitive = True
-        print(f'Case sensitive on{", smart mode off." if obj_text.smart_mode else "."}')
-        obj_text.smart_mode = False
-    elif command == '__case_sens_off__':
-        obj_text.case_sensitive = False
-        print('Case sensitive off.')
-    elif command == '__case_sens__':
-        print(f'Case sensitive: {"on." if obj_text.case_sensitive else "off."}')
-    elif command in command_dict:
-        print(command_dict[command]())
-    elif not command:
-        print('Print word or command.')
-    else:
-        print(obj_text.search_word(command))
+    return ("1. '!help' to show information about commands;\n"
+            "2. '!enter_file' for enter new file;\n"
+            "3. '!list_words' to show all unique words;\n"
+            "4. '!case_sens' to show the status case sensitive;\n"
+            "5. '!case_sens_on' to turn on case sensitive;\n"
+            "6. '!case_sens_off' to turn off case sensitive;\n"
+            "7. '!smart_mode' to show the status smart mode;\n"
+            "8. '!smart_mode_on' to enable smart mode;\n"
+            "9. '!smart_mode_off' to disable smart mode;\n"
+            "10. '!restart_text' to restart the text;\n"
+            "11. '!text' to show the current text;\n"
+            "12. '!result' to show analysis results;\n"
+            "13. '!remove_words' to remove words from the text;\n"
+            "14. '!replace_words' to replace words in the text;\n"
+            "15. '!save_to_json' to save the text analysis to a JSON file;\n"
+            "16. '!save_to_pickle' to save the text analysis to a Pickle file;\n"
+            "17. '!close' to close the program.\n")
 
 
 def parse_input(user_input: str):
     """Processes the user input string."""
-    return user_input.strip()
+    user_input = user_input.strip()
+    if not user_input.startswith('!'):
+        return user_input, []
+    command, *args = user_input.split()
+    args = ' '.join(args)
+    return command, args
+
+
+def user_command_handler(user_input: str, obj_text: AnalysisText, state: ProgramState):
+    """Handles user commands."""
+    command, args = parse_input(user_input)
+    command_args_dict = {
+        '!replace_words': obj_text.remove_or_replace_last_words
+    }
+    command_dict = {
+        '!case_sens_on': obj_text.case_sens_on,
+        '!case_sens_off': obj_text.case_sens_off,
+        '!case_sens': obj_text.show_case_sens,
+        '!smart_mode_on': obj_text.smart_mode_on,
+        '!smart_mode_off': obj_text.smart_mode_off,
+        '!smart_mode': obj_text.show_smart_mode,
+        '!enter_file': state.new_file,
+        '!restart_text': obj_text.restart_user_text,
+        '!text': obj_text.show_user_text,
+        '!result': obj_text.show_result,
+        '!remove_words': obj_text.remove_or_replace_last_words,
+        '!save_to_json': obj_text.save_file_to_json,
+        '!save_to_pickle': obj_text.save_file_to_pickle,
+        '!list_words': obj_text.show_list_words,
+        '!help': show_info_commands,
+        '!close': sys.exit
+    }
+
+    if command in command_dict:
+        print(command_dict[command]())
+    elif command in command_args_dict:
+        print(command_args_dict[command](args))
+    elif not command:
+        print('Print word or command.')
+    elif command.startswith('!'):
+        print(f'Incorrect command.\n\n{show_info_commands()}')
+    else:
+        print(obj_text.search_word(command))
 
 
 def main():
@@ -74,7 +79,7 @@ def main():
     while True:
         if state.enter_new_file:
             try:
-                user_path = parse_input(input('Enter path to file:'))
+                user_path = input('Enter path to file:').strip()
                 obj_text = AnalysisText(user_path)
                 obj_text.load_file()
                 print(obj_text)
@@ -92,8 +97,8 @@ def main():
                 print('The file is corrupted.')
                 continue
 
-        command = parse_input(input('Enter word for search or command:'))
-        user_command_handler(command, obj_text, state)
+        user_input = input('Enter word for search or command:')
+        user_command_handler(user_input, obj_text, state)
 
 
 if __name__ == '__main__':

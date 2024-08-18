@@ -1,43 +1,34 @@
 # Text Analysis Program
 
-This project is a comprehensive tool designed for analyzing text files. It supports multiple languages and provides various features, including word search, case sensitivity control, smart mode for flexible searching, and options to save analysis results in different formats.
-
-## Features
-
-- **Load and Analyze Text Files**: Supports `.txt`, `.json`, and `.pickle` formats.
-- **Search Functionality**: Search for words in the text with options for case sensitivity and smart mode.
-- **Smart Mode**: Allows searching for words not only as exact matches but also considering different forms (e.g., plural, past tense).
-- **Case Sensitivity**: Toggle case sensitivity for search results.
-- **Save Results**: Save analysis results in `.json` or `.pickle` formats.
+This program is designed to analyze text files and perform various text manipulations. Below are the available commands you can use:
 
 ## Commands
 
-- `__help__`: Show information about available commands.
-- `__enter_file__`: Enter a new file for analysis.
-- `__list_words__`: Display all unique words found in the text.
-- `__case_sens__`: Show the current case sensitivity status.
-- `__case_sens_on__`: Enable case sensitivity.
-- `__case_sens_off__`: Disable case sensitivity.
-- `__smart_mode__`: Show the current smart mode status.
-- `__smart_mode_on__`: Enable smart mode.
-- `__smart_mode_off__`: Disable smart mode.
-- `__close_program__`: Close the program.
-- `__save_to_pickle__`: Save analysis results in a `.pickle` file.
-- `__save_to_json__`: Save analysis results in a `.json` file.
+- `!help` - Show information about available commands.
+- `!enter_file` - Enter a new file path to load the text for analysis.
+- `!list_words` - Show all unique words found in the text.
+- `!case_sens` - Show the current status of case sensitivity.
+- `!case_sens_on` - Turn on case sensitivity for text analysis.
+- `!case_sens_off` - Turn off case sensitivity for text analysis.
+- `!smart_mode` - Show the current status of smart mode.
+- `!smart_mode_on` - Enable smart mode to search for words in various forms.
+- `!smart_mode_off` - Disable smart mode.
+- `!restart_text` - Restart the text to its original state.
+- `!text` - Show the current text loaded in the program.
+- `!result` - Show the results of the text analysis.
+- `!remove_words` - Remove specified words from the text.
+- `!replace_words` - Replace specified words in the text.
+- `!save_to_json` - Save the current text analysis to a JSON file.
+- `!save_to_pickle` - Save the current text analysis to a Pickle file.
+- `!close` - Close the program.
 
-## How to Run
+## Usage
 
-1. Clone the repository.
-2. Install required dependencies (if any).
-3. Run the `main.py` script.
-4. Follow the prompts to load a file and perform text analysis.
+1. Start the program and enter `!enter_file` to load a new text file.
+2. Use `!case_sens_on` or `!case_sens_off` to toggle case sensitivity.
+3. Enable or disable smart mode using `!smart_mode_on` or `!smart_mode_off`.
+4. Use `!remove_words` or `!replace_words` to modify the text.
+5. Save your analysis results using `!save_to_json` or `!save_to_pickle`.
+6. Close the program with `!close`.
 
-## Requirements
-
-- Python 3.8+
-- External libraries: `pymorphy2`, `nltk`, `langid`
-
-## Example Usage
-
-```python
-python main.py
+For more details or help, use the `!help` command.

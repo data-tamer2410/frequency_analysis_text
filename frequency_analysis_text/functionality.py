@@ -28,6 +28,10 @@ class ProgramState:
     def __init__(self):
         self.enter_new_file = True
 
+    def new_file(self):
+        self.enter_new_file = True
+        return '#' * 50
+
 
 class AnalysisText:
     """A class representing text analysis."""
@@ -38,7 +42,10 @@ class AnalysisText:
         self.new_file = False
         self.case_sensitive = False
         self.smart_mode = False
+        self.last_search_key = None
+        self.last_pattern = None
         self.support_language = ('uk', 'ru', 'en')
+        self.old_text = None
         self.text = None
         self.result_counter = None
         self.datetime_created = None
@@ -46,31 +53,71 @@ class AnalysisText:
         self.search_cache = {}
         self.search_cache_keys = []
 
+    def case_sens_on(self):
+        self.case_sensitive = True
+        mess = f'Case sensitive on{", smart mode off." if self.smart_mode else "."}'
+        self.smart_mode = False
+        return mess
+
+    def case_sens_off(self):
+        self.case_sensitive = False
+        return 'Case sensitive off.'
+
+    def show_case_sens(self):
+        return f'Case sensitive: {"on." if self.case_sensitive else "off."}'
+
+    def smart_mode_on(self):
+        if self.language in self.support_language:
+            self.smart_mode = True
+            mess = f'Smart mode on{", case sensitive off." if self.case_sensitive else "."}'
+            self.case_sensitive = False
+            return mess
+        return (f'At the moment the mode "__smart_mode__" only supports {self.support_language} languages,'
+                f' your text is in the {self.language} language.')
+
+    def smart_mode_off(self):
+        self.smart_mode = False
+        return 'Smart mode off.'
+
+    def show_smart_mode(self):
+        return f'Smart mode: {"on." if self.smart_mode else "off."}'
+
+    def show_user_text(self):
+        return self.text
+
+    def restart_user_text(self):
+        self.text = self.old_text
+        return 'Your text restart.'
+
+    def show_result(self):
+        return self
+
     def load_pickle_file(self):
         with open(self.path, 'rb') as file:
             obj = pickle.load(file)
-            self.text = copy.deepcopy(obj.text)
-            self.result_counter = copy.deepcopy(obj.result_counter)
-            self.datetime_created = copy.deepcopy(obj.datetime_created)
-            self.language = copy.deepcopy(obj.language)
-            self.search_cache = copy.deepcopy(obj.search_cache)
-            self.search_cache_keys = copy.deepcopy(obj.search_cache_keys)
+            self.old_text = obj.old_text
+            self.result_counter = obj.result_counter
+            self.datetime_created = obj.datetime_created
+            self.language = obj.language
+            self.text = obj.text
+            self.search_cache = copy.copy(obj.search_cache)
+            self.search_cache_keys = copy.copy(obj.search_cache_keys)
 
     def load_json_file(self):
         with open(self.path, 'r', encoding='utf-8') as file:
             data = json.load(file)
-            self.text = copy.deepcopy(data['text'])
-            self.result_counter = copy.deepcopy(data['result_counter'])
-            self.datetime_created = datetime.datetime.strptime(copy.deepcopy(data['datetime_created']),
-                                                               '%Y-%m-%d %H:%M:%S.%f')
-            self.language = copy.deepcopy(data['language'])
-            self.search_cache = copy.deepcopy(data['search_cache'])
-            self.search_cache_keys = copy.deepcopy(data['search_cache_keys'])
+            self.old_text = data['old_text']
+            self.result_counter = data['result_counter']
+            self.datetime_created = datetime.datetime.strptime(data['datetime_created'], '%Y-%m-%d %H:%M:%S.%f')
+            self.language = data['language']
+            self.text = data['text']
+            self.search_cache = copy.copy(data['search_cache'])
+            self.search_cache_keys = copy.copy(data['search_cache_keys'])
 
     def load_txt_file(self):
         self.new_file = True
         with open(self.path, 'r', encoding='utf-8') as file:
-            self.text = file.read()
+            self.old_text = file.read()
 
     def load_file(self):
         """Loads the text from the file."""
@@ -85,16 +132,19 @@ class AnalysisText:
         else:
             raise InvalidFileFormatError
 
+    def update_result_counter(self):
+        pattern = r'\b\w+\b|\b\d+\b|\b\d+\.\d+\b'
+        counter_text = Counter(re.findall(pattern, self.text))
+        if not counter_text:
+            raise EmptyFileError
+        self.result_counter = dict(sorted(counter_text.items(), key=lambda item: item[0]))
+
     def analyze_txt_file(self):
         """Analyzes the text to determine word and number frequencies."""
         if self.new_file:
-            pattern = r'\b\w+\b|\b\d+\b|\b\d+\.\d+\b'
-            counter_text = Counter(re.findall(pattern, self.text))
-            if not counter_text:
-                raise EmptyFileError
-            self.result_counter = dict(sorted(counter_text.items(), key=lambda item: item[0]))
             self.datetime_created = datetime.datetime.now()
-            self.language, _ = langid.classify(self.text)
+            self.language, _ = langid.classify(self.old_text)
+            self.text = self.old_text
 
     def save_file_to_pickle(self):
         path, mess = self.get_path_to_save('.pkl')
@@ -103,10 +153,11 @@ class AnalysisText:
         return mess
 
     def save_file_to_json(self):
-        data = {'text': self.text,
+        data = {'old_text': self.old_text,
                 'result_counter': self.result_counter,
                 'datetime_created': self.datetime_created.strftime('%Y-%m-%d %H:%M:%S.%f'),
                 'language': self.language,
+                'text': self.text,
                 'search_cache': self.search_cache,
                 'search_cache_keys': self.search_cache_keys}
         path, mess = self.get_path_to_save('.json')
@@ -162,14 +213,41 @@ class AnalysisText:
         self.search_cache_keys.append(search_key)
         self.search_cache[search_key] = res
 
+    def update_cache(self, case_sens):
+        keys_for_remove = []
+        for key, value in self.search_cache.items():
+            if re.findall(self.last_pattern, (value.lower() if not case_sens else value)):
+                keys_for_remove.append(key)
+        for key in keys_for_remove:
+            del self.search_cache[key]
+            self.search_cache_keys.remove(key)
+
+    def remove_or_replace_last_words(self, new_word=''):
+        if not self.last_pattern:
+            return 'First find the word in the text.'
+        case_sens = True if self.last_search_key.endswith('True False') else False
+        if case_sens:
+            self.text = re.sub(self.last_pattern, new_word, self.text)
+        else:
+            match = re.finditer(self.last_pattern, self.text.lower())
+            list_index = [(w.start(), w.end()) for w in match]
+            for start, end in sorted(list_index, reverse=True):
+                self.text = self.text[:start] + new_word + self.text[end:]
+        self.update_cache(case_sens)
+        self.last_pattern = None
+        self.last_search_key = None
+        return self.text + '\n\n' + ('Words replaced.' if new_word else 'Words removed.')
+
     def search_word(self, word):
         """Searches for a word in the text using cache."""
         pattern, text = self.get_pattern_and_text(word)
         search_key = f'{pattern} {self.case_sensitive} {self.smart_mode}'
         if search_key in self.search_cache:
+            self.last_search_key = search_key
+            self.last_pattern = pattern
             return self.search_cache[search_key]
-        all_rows_in_text = text.split('\n')
-        all_orig_rows_in_text = self.text.split('\n')
+        all_rows_in_text = [row for row in text.split('\n') if row]
+        all_orig_rows_in_text = [row for row in self.text.split('\n') if row]
         res = ''
         n_row = 0
         for row in all_rows_in_text:
@@ -179,14 +257,18 @@ class AnalysisText:
         if not res:
             return f'"{word}" - not exist in text.'
         self.save_cache(search_key, res)
+        self.last_search_key = search_key
+        self.last_pattern = pattern
         return res
 
     def show_list_words(self):
         """Shows a list of unique words."""
+        self.update_result_counter()
         return list(self.result_counter.keys())
 
     def __str__(self):
         """Generates a string with the analysis results."""
+        self.update_result_counter()
         res = 'Analysis Results:\n'
         res += '\n'.join([f'"{key}" -> {self.result_counter[key]}' for key in self.result_counter])
         res += '\n\nAnalysis performed on: ' + self.datetime_created.strftime('%d %B %Y; %H:%M') + '\n'

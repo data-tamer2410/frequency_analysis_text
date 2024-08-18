@@ -5,26 +5,29 @@ from datetime import date
 
 
 def test_show_info_commands():
-    assert show_info_commands() == ("1. '__help__' to show information about commands;\n"
-                                    "2. '__enter_file__' for enter new file;\n"
-                                    "3. '__list_words__' to show all unique words;\n"
-                                    "4. '__case_sens__' to show the status case sensitive;\n"
-                                    "5. '__case_sens_on__' to on case sensitive;\n"
-                                    "6. '__case_sens_off__' to off case sensitive;\n"
-                                    "7. '__smart_mode__' to show the status smart mode;\n"
-                                    "8. '__smart_mode_on__' to on the ability to search for words not only"
-                                    " as individual words;\n"
-                                    "9. '__smart_mode_off__' to off the ability to search for words not only as"
-                                    " individual words;\n"
-                                    "10. '__close_program__' to close program;\n"
-                                    "11. '__save_to_pickle__' to save in pickle file;\n"
-                                    "12. '__save_to_json__' to save in json file.")
+    assert show_info_commands() == ("1. '!help' to show information about commands;\n"
+                                    "2. '!enter_file' for enter new file;\n"
+                                    "3. '!list_words' to show all unique words;\n"
+                                    "4. '!case_sens' to show the status case sensitive;\n"
+                                    "5. '!case_sens_on' to turn on case sensitive;\n"
+                                    "6. '!case_sens_off' to turn off case sensitive;\n"
+                                    "7. '!smart_mode' to show the status smart mode;\n"
+                                    "8. '!smart_mode_on' to enable smart mode;\n"
+                                    "9. '!smart_mode_off' to disable smart mode;\n"
+                                    "10. '!restart_text' to restart the text;\n"
+                                    "11. '!text' to show the current text;\n"
+                                    "12. '!result' to show analysis results;\n"
+                                    "13. '!remove_words' to remove words from the text;\n"
+                                    "14. '!replace_words' to replace words in the text;\n"
+                                    "15. '!save_to_json' to save the text analysis to a JSON file;\n"
+                                    "16. '!save_to_pickle' to save the text analysis to a Pickle file;\n"
+                                    "17. '!close' to close the program.\n")
 
 
 def test_parse_input():
     word = '  test '
     res = parse_input(word)
-    assert res == 'test'
+    assert res == ('test', [])
 
 
 def test_load_empty_unavailable_format():
@@ -58,7 +61,7 @@ def test_load_analyze_txt_file():
     assert not obj.new_file
     obj.load_file()
     assert obj.text
-    assert obj.result_counter
+    assert not obj.result_counter
     assert obj.datetime_created
     assert obj.language == 'en'
     assert obj.new_file
@@ -69,33 +72,33 @@ def test_show_list_word():
 
 
 def test_user_command_handler_search_word_cache():
-    user_command_handler('__enter_file__', obj, state)
+    user_command_handler('!enter_file', obj, state)
     assert state.enter_new_file
-    user_command_handler('__case_sens_on__', obj, state)
+    user_command_handler('!case_sens_on', obj, state)
     assert obj.case_sensitive
     assert not obj.smart_mode
     assert obj.search_word('plAyEr') == '"plAyEr" - not exist in text.'
     assert not obj.search_cache_keys
     assert not obj.search_cache
-    user_command_handler('__smart_mode_on__', obj, state)
+    user_command_handler('!smart_mode_on', obj, state)
     assert obj.smart_mode
     assert not obj.case_sensitive
     assert obj.search_word('plAyEr') != '"player" - not exist in text.'
     key = obj.search_cache_keys[0]
     assert key == r'player False True'
     assert obj.search_cache[key]
-    user_command_handler('__case_sens_on__', obj, state)
+    user_command_handler('!case_sens_on', obj, state)
     assert obj.case_sensitive
     assert not obj.smart_mode
     assert obj.search_word('player') != '"player" - not exist in text.'
     key = obj.search_cache_keys[1]
     assert key == r'\bplayer\b True False'
     assert obj.search_cache[key]
-    user_command_handler('__case_sens_off__', obj, state)
+    user_command_handler('!case_sens_off', obj, state)
     assert not obj.case_sensitive
     assert not obj.smart_mode
-    user_command_handler('__smart_mode_on__', obj, state)
-    user_command_handler('__smart_mode_off__', obj, state)
+    user_command_handler('!smart_mode_on', obj, state)
+    user_command_handler('!smart_mode_off', obj, state)
     assert not obj.case_sensitive
     assert not obj.smart_mode
     assert obj.search_word('PlAyER') != '"player" - not exist in text.'
@@ -144,8 +147,8 @@ def test_user_command_handler_search_word_cache():
     assert key == r'\bигрок\b True False'
     assert obj_ru.search_cache[key]
 
-    user_command_handler('__smart_mode_on__', obj_uk, state)
-    user_command_handler('__smart_mode_on__', obj_ru, state)
+    user_command_handler('!smart_mode_on', obj_uk, state)
+    user_command_handler('!smart_mode_on', obj_ru, state)
 
     assert obj_uk.smart_mode
     assert obj_ru.smart_mode
@@ -201,8 +204,8 @@ def test_save_file_to_pickle_json():
 
 
 def test_load_file_from_pickle_json():
-    f_json = AnalysisText('2024-08-17_text_en.json')
-    f_pkl = AnalysisText('2024-08-17_text_en.pkl')
+    f_json = AnalysisText(f'{date.today()}_text_en.json')
+    f_pkl = AnalysisText(f'{date.today()}_text_en.pkl')
     f_json.load_file()
     f_pkl.load_file()
     assert (f_json.text, f_json.result_counter, f_json.datetime_created, f_json.language, f_json.search_cache,
