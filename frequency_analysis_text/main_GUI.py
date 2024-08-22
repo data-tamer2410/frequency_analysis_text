@@ -1,6 +1,8 @@
 from frequency_analysis_text.functionality import AnalysisText, InvalidFileFormatError, EmptyFileError
+from frequency_analysis_text.main import show_info_commands
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
+from PIL import ImageTk, Image
 
 
 class MyApp:
@@ -10,9 +12,17 @@ class MyApp:
         self.root.geometry('800x500')
         self.root.configure(background='gray')
 
+        self.menu_bar = tk.Menu(self.root)
+        self.root.config(menu=self.menu_bar)
+
         self.soft_green = '#66cc66'
         self.soft_red = '#cc6666'
 
+        self.btn_redo = None
+        self.redo_icon = None
+        self.btn_undo = None
+        self.undo_icon = None
+        self.help_menu = None
         self.ent_new_word = None
         self.btn_replace_word = None
         self.scrollbar_text_x = None
@@ -35,6 +45,10 @@ class MyApp:
         self.create_widgets()
 
     def create_widgets(self):
+        self.help_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.menu_bar.add_cascade(label="Help", menu=self.help_menu)
+        self.help_menu.add_command(label="Command info", command=self.show_help)
+
         self.frm_load_file = tk.Frame(self.root, height=25, background='gray')
         self.frm_load_file.pack(fill=tk.X, pady=(5, 10))
 
@@ -45,7 +59,7 @@ class MyApp:
         self.lab_path_to_file.grid(row=0, column=0, padx=5, columnspan=2, sticky='we')
 
         self.btn_load_file = tk.Button(self.frm_load_file, text='Load file', width=8, bg='lightgray',
-                                       command=self.load_file)
+                                       command=self.load_file, activebackground='lightgray')
         self.btn_load_file.grid(row=0, column=2, padx=5)
 
         self.frm_command = tk.Frame(self.root, height=200, bg='gray', borderwidth=5, relief=tk.GROOVE)
@@ -60,7 +74,7 @@ class MyApp:
                               'To json': ((1, 2), self.save_to_json), 'List words': ((1, 3), self.list_words)}
         for name, row_col_com in self.dict_commands.items():
             b = tk.Button(self.frm_command, text=name, width=10, height=3, background='lightgray',
-                          command=row_col_com[1])
+                          command=row_col_com[1], activebackground='lightgray')
             b.grid(row=row_col_com[0][0], column=row_col_com[0][1], padx=(5, 10), pady=5)
             self.buttons.update({name: b})
 
@@ -71,24 +85,68 @@ class MyApp:
         self.frm_search.pack(pady=(10, 0), fill=tk.X)
 
         self.frm_search.rowconfigure(0, weight=1)
-        self.frm_search.columnconfigure([0, 1, 3, 4], weight=1)
+        self.frm_search.columnconfigure([1, 5], weight=1)
 
         self.btn_search_word = tk.Button(self.frm_search, text='Search word', width=15, background='lightgray',
-                                         command=self.search)
-        self.btn_search_word.grid(row=0, column=0, padx=(0, 5), sticky='e')
+                                         command=self.search, activebackground='lightgray')
+        self.btn_search_word.grid(row=0, column=0, padx=(15, 5), sticky='w')
 
-        self.ent_search_word = tk.Entry(self.frm_search, width=30, background='lightgray')
-        self.ent_search_word.grid(row=0, column=1, padx=(5, 20), sticky='w')
+        self.ent_search_word = tk.Entry(self.frm_search, background='lightgray')
+        self.ent_search_word.grid(row=0, column=1, padx=(0, 20), sticky='we')
+
+        im = Image.open('undo.png').resize((20, 20))
+        self.undo_icon = ImageTk.PhotoImage(image=im)
+
+        self.btn_undo = tk.Button(self.frm_search, image=self.undo_icon, width=25, height=25, bg='lightgray',
+                                  activebackground='lightgray', command=self.undo)
+        self.btn_undo.grid(row=0, column=2, padx=(0, 10), sticky='w')
+
+        im = Image.open('redo.png').resize((20, 20))
+        self.redo_icon = ImageTk.PhotoImage(image=im)
+
+        self.btn_redo = tk.Button(self.frm_search, image=self.redo_icon, width=25, height=25, bg='lightgray',
+                                  activebackground='lightgray', command=self.redo)
+        self.btn_redo.grid(row=0, column=3, padx=(0, 20), sticky='e')
 
         self.btn_replace_word = tk.Button(self.frm_search, text='Replace', width=15, background='lightgray',
-                                          command=self.replace_words)
-        self.btn_replace_word.grid(row=0, column=3, padx=(20, 5), sticky='e')
+                                          command=self.replace_words, activebackground='lightgray')
+        self.btn_replace_word.grid(row=0, column=4, padx=(0, 5), sticky='e')
 
-        self.ent_new_word = tk.Entry(self.frm_search, width=30, background='lightgray')
-        self.ent_new_word.grid(row=0, column=4, padx=(5, 0), sticky='w')
+        self.ent_new_word = tk.Entry(self.frm_search, background='lightgray')
+        self.ent_new_word.grid(row=0, column=5, padx=(0, 15), sticky='ew')
 
         self.txt_text = tk.Text(self.root, background='lightgray', wrap=tk.WORD, relief=tk.SUNKEN, borderwidth=5)
         self.txt_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+    def undo(self):
+        if self.obj_text:
+            self.text_on()
+            mess = 'Press "Restart" to return original text.'
+            if self.obj_text.history:
+                el = self.obj_text.history.pop(-1)
+                self.obj_text.redo_stack.append(self.obj_text.text)
+                self.obj_text.text = el
+                self.txt_text.replace('1.0', tk.END, self.obj_text.text)
+                mess = 'Successful undo.'
+            self.txt_log_command.replace('1.0', tk.END, mess)
+            self.text_off()
+
+    def redo(self):
+        if self.obj_text:
+            self.text_on()
+            mess = 'Not successful redo.'
+            if self.obj_text.redo_stack:
+                el = self.obj_text.redo_stack.pop(-1)
+                self.obj_text.history.append(self.obj_text.text)
+                self.obj_text.text = el
+                self.txt_text.replace('1.0', tk.END, self.obj_text.text)
+                mess = 'Successful redo.'
+            self.txt_log_command.replace('1.0', tk.END, mess)
+            self.text_off()
+
+    @staticmethod
+    def show_help():
+        messagebox.showinfo('Help', show_info_commands())
 
     def text_off(self):
         self.txt_text.config(state='disabled')
@@ -139,7 +197,8 @@ class MyApp:
             self.text_off()
 
     def restart_text(self):
-        if self.obj_text:
+        if self.obj_text and messagebox.askquestion('Restart', 'Are you sure you want to restart the '
+                                                               'text?') == 'yes':
             self.text_on()
             mess = self.obj_text.restart_user_text()
             self.txt_text.replace('1.0', tk.END, self.obj_text.text)
@@ -147,7 +206,8 @@ class MyApp:
             self.text_off()
 
     def remove_words(self):
-        if self.obj_text:
+        if self.obj_text and messagebox.askquestion('Remove', 'Are you sure you want '
+                                                              'to remove selected word from the text?') == 'yes':
             self.text_on()
             mess = self.obj_text.remove_or_replace_last_words()
             self.txt_text.replace('1.0', tk.END, self.obj_text.text)
@@ -155,9 +215,11 @@ class MyApp:
             self.text_off()
 
     def replace_words(self):
-        if self.obj_text:
+        new_word = self.ent_new_word.get().strip()
+        if self.obj_text and messagebox.askquestion('Replace', f'Are you sure you want to replace the '
+                                                               f'selected word with "{new_word}"'
+                                                               f' from the text?') == 'yes':
             self.text_on()
-            new_word = self.ent_new_word.get().strip()
             mess = self.obj_text.remove_or_replace_last_words(new_word)
             self.ent_new_word.delete(0, tk.END)
             self.txt_text.replace('1.0', tk.END, self.obj_text.text)
@@ -180,19 +242,31 @@ class MyApp:
 
     def save_to_pickle(self):
         if self.obj_text:
-            self.text_on()
-            mess = self.obj_text.save_file_to_pickle()
-            self.txt_log_command.replace('1.0', tk.END, mess)
-            self.buttons['To pickle'].config(bg=self.soft_green, activebackground=self.soft_green)
-            self.text_off()
+            quest = ('If a file with the same name exists, this file will be recorded with a unique identifier.'
+                     '\nAre you sure you want to save the pickle file again?')
+            save = 'yes'
+            if self.buttons['To pickle']['bg'] == self.soft_green:
+                save = messagebox.askquestion('Save to pickle', quest)
+            if save == 'yes':
+                self.text_on()
+                mess = self.obj_text.save_file_to_pickle()
+                self.txt_log_command.replace('1.0', tk.END, mess)
+                self.buttons['To pickle'].config(bg=self.soft_green, activebackground=self.soft_green)
+                self.text_off()
 
     def save_to_json(self):
         if self.obj_text:
-            self.text_on()
-            mess = self.obj_text.save_file_to_json()
-            self.txt_log_command.replace('1.0', tk.END, mess)
-            self.buttons['To json'].config(bg=self.soft_green, activebackground=self.soft_green)
-            self.text_off()
+            quest = ('If a file with the same name exists, this file will be recorded with a unique identifier.'
+                     '\nAre you sure you want to save the json file again?')
+            save = 'yes'
+            if self.buttons['To json']['bg'] == self.soft_green:
+                save = messagebox.askquestion('Save to json', quest)
+            if save == 'yes':
+                self.text_on()
+                mess = self.obj_text.save_file_to_json()
+                self.txt_log_command.replace('1.0', tk.END, mess)
+                self.buttons['To json'].config(bg=self.soft_green, activebackground=self.soft_green)
+                self.text_off()
 
     def return_all(self):
         self.ent_new_word.delete(0, tk.END)

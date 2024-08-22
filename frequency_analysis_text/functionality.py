@@ -53,6 +53,9 @@ class AnalysisText:
         self.search_cache = {}
         self.search_cache_keys = []
 
+        self.history = []
+        self.redo_stack = []
+
     def case_sens_on(self):
         self.case_sensitive = True
         mess = f'Case sensitive on{", smart mode off." if self.smart_mode else "."}'
@@ -86,8 +89,11 @@ class AnalysisText:
         return self.text
 
     def restart_user_text(self):
-        self.text = self.old_text
-        return 'Your text restart.'
+        if self.text != self.old_text:
+            self.save_state()
+            self.text = self.old_text
+            return 'Text restarted.'
+        return 'The text is not restarted because it is already equal to the original text.'
 
     def show_result(self):
         return self
@@ -102,6 +108,8 @@ class AnalysisText:
             self.text = obj.text
             self.search_cache = copy.copy(obj.search_cache)
             self.search_cache_keys = copy.copy(obj.search_cache_keys)
+            self.history = copy.copy(obj.history)
+            self.redo_stack = copy.copy(obj.redo_stack)
 
     def load_json_file(self):
         with open(self.path, 'r', encoding='utf-8') as file:
@@ -113,6 +121,8 @@ class AnalysisText:
             self.text = data['text']
             self.search_cache = copy.copy(data['search_cache'])
             self.search_cache_keys = copy.copy(data['search_cache_keys'])
+            self.history = copy.copy(data['history'])
+            self.redo_stack = copy.copy(data['redo_stack'])
 
     def load_txt_file(self):
         self.new_file = True
@@ -159,7 +169,9 @@ class AnalysisText:
                 'language': self.language,
                 'text': self.text,
                 'search_cache': self.search_cache,
-                'search_cache_keys': self.search_cache_keys}
+                'search_cache_keys': self.search_cache_keys,
+                'history': self.history,
+                'redo_stack': self.redo_stack}
         path, mess = self.get_path_to_save('.json')
         with open(path, 'w', encoding='utf-8') as file:
             json.dump(data, file, ensure_ascii=False, indent=4)
@@ -220,9 +232,20 @@ class AnalysisText:
             del self.search_cache[key]
             self.search_cache_keys.remove(key)
 
+    def save_state(self):
+        self.redo_stack.clear()
+        if self.history:
+            if len(self.history) > 10:
+                self.history.pop(0)
+            if self.history[-1] != self.text:
+                self.history.append(self.text)
+        elif self.text != self.old_text:
+            self.history.append(self.text)
+
     def remove_or_replace_last_words(self, new_word=''):
         if not self.last_pattern:
             return 'First find the word in the text.'
+        self.save_state()
         case_sens = True if self.last_search_key.endswith('True False') else False
         if case_sens:
             self.text = re.sub(self.last_pattern, new_word, self.text)
