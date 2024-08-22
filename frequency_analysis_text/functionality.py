@@ -173,9 +173,7 @@ class AnalysisText:
         while Path(path).exists():
             path = f'{self.datetime_created.date()}_{file_name}_{count:03}{suffix}'
             count += 1
-        if count > 1:
-            return path, 'Such a file may already exist, but it was still saved with a unique authenticator.'
-        return path, 'File save.'
+        return path, f'File save to {"pickle" if suffix == ".pkl" or suffix == ".pickle" else "json"}.'
 
     @staticmethod
     def is_float_or_int(word):
@@ -236,7 +234,7 @@ class AnalysisText:
         self.update_cache(case_sens)
         self.last_pattern = None
         self.last_search_key = None
-        return self.text + '\n\n' + ('Words replaced.' if new_word else 'Words removed.')
+        return 'Words replaced.' if new_word else 'Words removed.'
 
     def search_word(self, word):
         """Searches for a word in the text using cache."""
@@ -253,9 +251,11 @@ class AnalysisText:
         for row in all_rows_in_text:
             n_row += 1
             if re.findall(pattern, row):
-                res += f'{n_row}: {all_orig_rows_in_text[n_row - 1]}\n'
-        if not res:
-            return f'"{word}" - not exist in text.'
+                res += f'{n_row}: {all_orig_rows_in_text[n_row - 1]}\n\n'
+        if not res or not word:
+            self.last_search_key = None
+            self.last_pattern = None
+            return f'"{word}" - not exist in text.' if word else 'Enter a word for search.'
         self.save_cache(search_key, res)
         self.last_search_key = search_key
         self.last_pattern = pattern

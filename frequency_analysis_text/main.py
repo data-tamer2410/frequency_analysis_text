@@ -64,8 +64,6 @@ def user_command_handler(user_input: str, obj_text: AnalysisText, state: Program
         print(command_dict[command]())
     elif command in command_args_dict:
         print(command_args_dict[command](args))
-    elif not command:
-        print('Print word or command.')
     elif command.startswith('!'):
         print(f'Incorrect command.\n\n{show_info_commands()}')
     else:
