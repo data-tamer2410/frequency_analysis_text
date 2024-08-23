@@ -18,6 +18,13 @@ class MyApp:
         self.soft_green = '#66cc66'
         self.soft_red = '#cc6666'
 
+        self.btn_font1 = ('Helvetica', 10, 'bold')
+        self.btn_font2 = ('Helvetica', 9, 'bold')
+        self.txt_font = ('Times New Roman', 12)
+        self.txt_font2 = ('Arial', 11, 'italic')
+        self.ent_font = ('Verdana', 11, 'bold')
+        self.lab_font = ('Consolas', 11)
+
         self.btn_redo = None
         self.redo_icon = None
         self.btn_undo = None
@@ -52,20 +59,19 @@ class MyApp:
         self.frm_load_file = tk.Frame(self.root, height=25, background='gray')
         self.frm_load_file.pack(fill=tk.X, pady=(5, 10))
 
-        self.frm_load_file.rowconfigure(0, weight=1)
         self.frm_load_file.columnconfigure([0, 1], weight=1)
 
-        self.lab_path_to_file = tk.Label(self.frm_load_file, text='Path to file...', anchor='w', bg='lightgray')
+        self.lab_path_to_file = tk.Label(self.frm_load_file, text='Path to file...', anchor='w', bg='lightgray',
+                                         font=self.lab_font)
         self.lab_path_to_file.grid(row=0, column=0, padx=5, columnspan=2, sticky='we')
 
         self.btn_load_file = tk.Button(self.frm_load_file, text='Load file', width=8, bg='lightgray',
-                                       command=self.load_file, activebackground='lightgray')
+                                       command=self.load_file, activebackground='lightgray', font=self.btn_font2)
         self.btn_load_file.grid(row=0, column=2, padx=5)
 
         self.frm_command = tk.Frame(self.root, height=200, bg='gray', borderwidth=5, relief=tk.GROOVE)
         self.frm_command.pack(fill=tk.X, padx=5)
 
-        self.frm_command.rowconfigure([0, 1], weight=1)
         self.frm_command.columnconfigure(4, weight=1)
 
         self.dict_commands = {'Smart mode': ((0, 0), self.smart_mode), 'Result': ((0, 1), self.update_result),
@@ -74,24 +80,24 @@ class MyApp:
                               'To json': ((1, 2), self.save_to_json), 'List words': ((1, 3), self.list_words)}
         for name, row_col_com in self.dict_commands.items():
             b = tk.Button(self.frm_command, text=name, width=10, height=3, background='lightgray',
-                          command=row_col_com[1], activebackground='lightgray')
+                          command=row_col_com[1], activebackground='lightgray', font=self.btn_font1)
             b.grid(row=row_col_com[0][0], column=row_col_com[0][1], padx=(5, 10), pady=5)
             self.buttons.update({name: b})
 
-        self.txt_log_command = tk.Text(self.frm_command, height=7.5, bg='green', background='lightgray', wrap=tk.WORD)
+        self.txt_log_command = tk.Text(self.frm_command, height=7.5, bg='green', background='lightgray', wrap=tk.WORD,
+                                       font=self.txt_font2)
         self.txt_log_command.grid(row=0, column=4, rowspan=2, padx=(10, 5), pady=5, sticky='ew')
 
         self.frm_search = tk.Frame(self.root, background='gray', height=25)
         self.frm_search.pack(pady=(10, 0), fill=tk.X)
 
-        self.frm_search.rowconfigure(0, weight=1)
         self.frm_search.columnconfigure([1, 5], weight=1)
 
         self.btn_search_word = tk.Button(self.frm_search, text='Search word', width=15, background='lightgray',
-                                         command=self.search, activebackground='lightgray')
+                                         command=self.search, activebackground='lightgray', font=self.btn_font2)
         self.btn_search_word.grid(row=0, column=0, padx=(15, 5), sticky='w')
 
-        self.ent_search_word = tk.Entry(self.frm_search, background='lightgray')
+        self.ent_search_word = tk.Entry(self.frm_search, background='lightgray', font=self.ent_font)
         self.ent_search_word.grid(row=0, column=1, padx=(0, 20), sticky='we')
 
         im = Image.open('undo.png').resize((20, 20))
@@ -109,14 +115,17 @@ class MyApp:
         self.btn_redo.grid(row=0, column=3, padx=(0, 20), sticky='e')
 
         self.btn_replace_word = tk.Button(self.frm_search, text='Replace', width=15, background='lightgray',
-                                          command=self.replace_words, activebackground='lightgray')
+                                          command=self.replace_words, activebackground='lightgray', font=self.btn_font2)
         self.btn_replace_word.grid(row=0, column=4, padx=(0, 5), sticky='e')
 
-        self.ent_new_word = tk.Entry(self.frm_search, background='lightgray')
+        self.ent_new_word = tk.Entry(self.frm_search, background='lightgray', font=self.ent_font)
         self.ent_new_word.grid(row=0, column=5, padx=(0, 15), sticky='ew')
 
-        self.txt_text = tk.Text(self.root, background='lightgray', wrap=tk.WORD, relief=tk.SUNKEN, borderwidth=5)
+        self.txt_text = tk.Text(self.root, background='lightgray', wrap=tk.WORD, relief=tk.SUNKEN, borderwidth=5,
+                                font=self.txt_font)
         self.txt_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+        self.txt_text.tag_config('light', background='yellow')
 
     def undo(self):
         if self.obj_text:
@@ -229,15 +238,22 @@ class MyApp:
     def search(self):
         if self.obj_text:
             self.text_on()
+            tag = False
             word = self.ent_search_word.get().strip()
             mess_for_text = self.obj_text.text
-            mess_for_log = self.obj_text.search_word(word)
+            mess_for_log, list_index = self.obj_text.search_word(word, True)
             if not mess_for_log.endswith('" - not exist in text.') and mess_for_log != 'Enter a word for search.':
+                tag = True
                 mess_for_text = mess_for_log
                 mess_for_log = f'"{word}" - found.'
             self.ent_search_word.delete(0, tk.END)
             self.txt_log_command.replace('1.0', tk.END, mess_for_log)
             self.txt_text.replace('1.0', tk.END, mess_for_text)
+            if tag:
+                for start, end in list_index:
+                    start_index = f"1.0+{start}c"
+                    end_index = f"1.0+{end}c"
+                    self.txt_text.tag_add('light', start_index, end_index)
             self.text_off()
 
     def save_to_pickle(self):

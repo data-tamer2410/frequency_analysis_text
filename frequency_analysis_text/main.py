@@ -67,7 +67,7 @@ def user_command_handler(user_input: str, obj_text: AnalysisText, state: Program
     elif command.startswith('!'):
         print(f'Incorrect command.\n\n{show_info_commands()}')
     else:
-        print(obj_text.search_word(command))
+        print(obj_text.search_word(command)[0])
 
 
 def main():

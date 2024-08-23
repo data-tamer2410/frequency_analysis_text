@@ -77,13 +77,13 @@ def test_user_command_handler_search_word_cache():
     user_command_handler('!case_sens_on', obj, state)
     assert obj.case_sensitive
     assert not obj.smart_mode
-    assert obj.search_word('plAyEr') == '"plAyEr" - not exist in text.'
+    assert obj.search_word('plAyEr')[0] == '"plAyEr" - not exist in text.'
     assert not obj.search_cache_keys
     assert not obj.search_cache
     user_command_handler('!smart_mode_on', obj, state)
     assert obj.smart_mode
     assert not obj.case_sensitive
-    assert obj.search_word('plAyEr') != '"player" - not exist in text.'
+    assert obj.search_word('plAyEr')[0] != '"player" - not exist in text.'
     key = obj.search_cache_keys[0]
     assert key == r'player False True'
     assert obj.search_cache[key]
@@ -115,10 +115,10 @@ def test_user_command_handler_search_word_cache():
     assert not all((obj_uk.search_cache, obj_ru.search_cache))
     assert not all((obj_uk.search_cache_keys, obj_ru.search_cache_keys))
 
-    assert obj_uk.search_word('ГраВеЦь') != '"гравець" - not exist in text.'
-    assert obj_ru.search_word('игРОк') != '"игрок" - not exist in text.'
-    assert obj_uk.search_word('ГраВеЦь')
-    assert obj_ru.search_word('игРОк')
+    assert obj_uk.search_word('ГраВеЦь')[0] != '"гравець" - not exist in text.'
+    assert obj_ru.search_word('игРОк')[0] != '"игрок" - not exist in text.'
+    assert obj_uk.search_word('ГраВеЦь')[0]
+    assert obj_ru.search_word('игРОк')[0]
 
     key = obj_uk.search_cache_keys[0]
     assert key == r'\bгравець\b False False'
@@ -131,13 +131,13 @@ def test_user_command_handler_search_word_cache():
     obj_uk.case_sensitive = True
     obj_ru.case_sensitive = True
 
-    assert obj_uk.search_word('ГраВеЦь') == '"ГраВеЦь" - not exist in text.'
-    assert obj_ru.search_word('игРОк') == '"игРОк" - not exist in text.'
+    assert obj_uk.search_word('ГраВеЦь')[0] == '"ГраВеЦь" - not exist in text.'
+    assert obj_ru.search_word('игРОк')[0] == '"игРОк" - not exist in text.'
 
-    assert obj_uk.search_word('гравець') != '"гравець" - not exist in text.'
-    assert obj_ru.search_word('игрок') != '"игрок" - not exist in text.'
-    assert obj_uk.search_word('гравець')
-    assert obj_ru.search_word('игрок')
+    assert obj_uk.search_word('гравець')[0] != '"гравець" - not exist in text.'
+    assert obj_ru.search_word('игрок')[0] != '"игрок" - not exist in text.'
+    assert obj_uk.search_word('гравець')[0]
+    assert obj_ru.search_word('игрок')[0]
 
     key = obj_uk.search_cache_keys[1]
     assert key == r'\bгравець\b True False'
@@ -155,10 +155,10 @@ def test_user_command_handler_search_word_cache():
     assert not obj_uk.case_sensitive
     assert not obj_ru.case_sensitive
 
-    assert obj_uk.search_word('ГрАвцЕві') != '"гравцеві" - not exist in text.'
-    assert obj_ru.search_word('иГроКАми') != '"игроками" - not exist in text.'
-    assert obj_uk.search_word('ГрАвцЕві')
-    assert obj_ru.search_word('иГроКАми')
+    assert obj_uk.search_word('ГрАвцЕві')[0] != '"гравцеві" - not exist in text.'
+    assert obj_ru.search_word('иГроКАми')[0] != '"игроками" - not exist in text.'
+    assert obj_uk.search_word('ГрАвцЕві')[0]
+    assert obj_ru.search_word('иГроКАми')[0]
 
     key = obj_uk.search_cache_keys[2]
     assert obj_uk.search_cache[key]
@@ -173,8 +173,8 @@ def test_search_cache():
     obj2 = AnalysisText('tests/texts/text_en.txt')
     obj2.load_file()
     obj2.search_word('Football')
-    value = obj2.search_word('FooTBall')
-    list_cache_values = list(obj2.search_cache.values())
+    value = obj2.search_word('FooTBall')[0]
+    list_cache_values = [t[0] for t in obj2.search_cache.values()]
     assert value in list_cache_values
     assert obj2.search_cache_keys[0] == r'\bfootball\b False False'
     for i in range(500):
@@ -204,20 +204,21 @@ def test_save_file_to_pickle_json():
 
 
 def test_load_file_from_pickle_json():
-    f_json = AnalysisText(f'{date.today()}_text_en.json')
-    f_pkl = AnalysisText(f'{date.today()}_text_en.pkl')
+    f_json = AnalysisText(f'{date.today()}_text_en_000.json')
+    f_pkl = AnalysisText(f'{date.today()}_text_en_000.pkl')
     f_json.load_file()
     f_pkl.load_file()
-    assert (f_json.text, f_json.result_counter, f_json.datetime_created, f_json.language, f_json.search_cache,
-            f_json.search_cache_keys) == (obj.text, obj.result_counter, obj.datetime_created, obj.language,
-                                          obj.search_cache, obj.search_cache_keys)
+    assert (f_json.text, f_json.result_counter, f_json.datetime_created, f_json.language,
+            f_json.search_cache_keys) == (
+               obj.text, obj.result_counter, obj.datetime_created, obj.language, obj.search_cache_keys)
     assert (f_pkl.text, f_pkl.result_counter, f_pkl.datetime_created, f_pkl.language, f_pkl.search_cache,
-            f_pkl.search_cache_keys) == (obj.text, obj.result_counter, obj.datetime_created, obj.language,
-                                         obj.search_cache, obj.search_cache_keys)
+            f_pkl.search_cache_keys, f_pkl.history, f_pkl.redo_stack) == (
+               obj.text, obj.result_counter, obj.datetime_created, obj.language,
+               obj.search_cache, obj.search_cache_keys, obj.history, obj.redo_stack)
 
 
 def test_clear():
-    Path(f'{str(date.today())}_text_en.json').absolute().unlink()
-    Path(f'{str(date.today())}_text_en.pkl').absolute().unlink()
+    Path(f'{str(date.today())}_text_en_000.json').absolute().unlink()
+    Path(f'{str(date.today())}_text_en_000.pkl').absolute().unlink()
     Path(f'{str(date.today())}_text_en_001.json').absolute().unlink()
     Path(f'{str(date.today())}_text_en_001.pkl').absolute().unlink()

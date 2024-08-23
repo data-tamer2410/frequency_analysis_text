@@ -102,7 +102,7 @@ class AnalysisText:
         with open(self.path, 'rb') as file:
             obj = pickle.load(file)
             self.old_text = obj.old_text
-            self.result_counter = obj.result_counter
+            self.result_counter = copy.copy(obj.result_counter)
             self.datetime_created = obj.datetime_created
             self.language = obj.language
             self.text = obj.text
@@ -115,11 +115,11 @@ class AnalysisText:
         with open(self.path, 'r', encoding='utf-8') as file:
             data = json.load(file)
             self.old_text = data['old_text']
-            self.result_counter = data['result_counter']
+            self.result_counter = copy.copy(data['result_counter'])
             self.datetime_created = datetime.datetime.strptime(data['datetime_created'], '%Y-%m-%d %H:%M:%S.%f')
             self.language = data['language']
             self.text = data['text']
-            self.search_cache = copy.copy(data['search_cache'])
+            self.search_cache = copy.deepcopy(data['search_cache'])
             self.search_cache_keys = copy.copy(data['search_cache_keys'])
             self.history = copy.copy(data['history'])
             self.redo_stack = copy.copy(data['redo_stack'])
@@ -180,10 +180,17 @@ class AnalysisText:
     def get_path_to_save(self, suffix):
         """Saves the analysis results to a file."""
         file_name = self.path.stem
-        path = f'{self.datetime_created.date()}_{file_name}{suffix}'
+        old_suffix = self.path.suffix
+        if old_suffix == '.txt':
+            path = f'{self.datetime_created.date()}_{file_name}_000{suffix}'
+        else:
+            path = f'{file_name}{suffix}'
         count = 1
         while Path(path).exists():
-            path = f'{self.datetime_created.date()}_{file_name}_{count:03}{suffix}'
+            if old_suffix == '.txt':
+                path = f'{self.datetime_created.date()}_{file_name}_{count:03}{suffix}'
+            else:
+                path = f'{file_name[:-3]}{count:03}{suffix}'
             count += 1
         return path, f'File save to {"pickle" if suffix == ".pkl" or suffix == ".pickle" else "json"}.'
 
@@ -225,7 +232,7 @@ class AnalysisText:
 
     def update_cache(self, case_sens):
         keys_for_remove = []
-        for key, value in self.search_cache.items():
+        for key, (value, _) in self.search_cache.items():
             if re.findall(self.last_pattern, (value.lower() if not case_sens else value)):
                 keys_for_remove.append(key)
         for key in keys_for_remove:
@@ -235,7 +242,7 @@ class AnalysisText:
     def save_state(self):
         self.redo_stack.clear()
         if self.history:
-            if len(self.history) > 10:
+            if len(self.history) > 50:
                 self.history.pop(0)
             if self.history[-1] != self.text:
                 self.history.append(self.text)
@@ -259,30 +266,37 @@ class AnalysisText:
         self.last_search_key = None
         return 'Words replaced.' if new_word else 'Words removed.'
 
-    def search_word(self, word):
+    def search_word(self, word, for_gui=False):
         """Searches for a word in the text using cache."""
         pattern, text = self.get_pattern_and_text(word)
         search_key = f'{pattern} {self.case_sensitive} {self.smart_mode}'
         if search_key in self.search_cache:
             self.last_search_key = search_key
             self.last_pattern = pattern
-            return self.search_cache[search_key]
+            return self.search_cache[search_key][0], self.search_cache[search_key][1]
         all_rows_in_text = [row for row in text.split('\n') if row]
         all_orig_rows_in_text = [row for row in self.text.split('\n') if row]
+        list_index = None
+        for_index_gui = ''
         res = ''
         n_row = 0
         for row in all_rows_in_text:
             n_row += 1
             if re.findall(pattern, row):
                 res += f'{n_row}: {all_orig_rows_in_text[n_row - 1]}\n\n'
+                for_index_gui += f'{n_row}: {row}\n\n' if for_gui else ''
         if not res or not word:
             self.last_search_key = None
             self.last_pattern = None
-            return f'"{word}" - not exist in text.' if word else 'Enter a word for search.'
-        self.save_cache(search_key, res)
+            return f'"{word}" - not exist in text.' if word else 'Enter a word for search.', None
+        if for_gui:
+            match = re.finditer(pattern, for_index_gui)
+            list_index = [(w.start(), w.end()) for w in match]
+        if not self.redo_stack:
+            self.save_cache(search_key, (res, list_index))
         self.last_search_key = search_key
         self.last_pattern = pattern
-        return res
+        return res, list_index
 
     def show_list_words(self):
         """Shows a list of unique words."""
