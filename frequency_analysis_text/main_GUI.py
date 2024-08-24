@@ -102,6 +102,7 @@ class MyApp:
         im = Image.open('undo.png').resize((20, 20))
         self.undo_icon = ImageTk.PhotoImage(image=im)
 
+        # noinspection PyTypeChecker
         self.btn_undo = tk.Button(self.frm_search, image=self.undo_icon, width=25, height=25, bg='lightgray',
                                   activebackground='lightgray', command=self.undo)
         self.btn_undo.grid(row=0, column=2, padx=(0, 10), sticky='w')
@@ -109,6 +110,7 @@ class MyApp:
         im = Image.open('redo.png').resize((20, 20))
         self.redo_icon = ImageTk.PhotoImage(image=im)
 
+        # noinspection PyTypeChecker
         self.btn_redo = tk.Button(self.frm_search, image=self.redo_icon, width=25, height=25, bg='lightgray',
                                   activebackground='lightgray', command=self.redo)
         self.btn_redo.grid(row=0, column=3, padx=(0, 20), sticky='e')
