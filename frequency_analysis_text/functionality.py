@@ -98,7 +98,7 @@ class AnalysisText:
     def show_result(self):
         return self
 
-    def load_pickle_file(self):
+    def load_pickle_file(self,for_gui):
         with open(self.path, 'rb') as file:
             obj = pickle.load(file)
             self.old_text = obj.old_text
@@ -106,12 +106,12 @@ class AnalysisText:
             self.datetime_created = obj.datetime_created
             self.language = obj.language
             self.text = obj.text
-            self.search_cache = copy.copy(obj.search_cache)
-            self.search_cache_keys = copy.copy(obj.search_cache_keys)
+            self.search_cache = copy.copy(obj.search_cache) if not for_gui else {}
+            self.search_cache_keys = copy.copy(obj.search_cache_keys) if not for_gui else []
             self.history = copy.copy(obj.history)
             self.redo_stack = copy.copy(obj.redo_stack)
 
-    def load_json_file(self):
+    def load_json_file(self,for_gui):
         with open(self.path, 'r', encoding='utf-8') as file:
             data = json.load(file)
             self.old_text = data['old_text']
@@ -119,8 +119,8 @@ class AnalysisText:
             self.datetime_created = datetime.datetime.strptime(data['datetime_created'], '%Y-%m-%d %H:%M:%S.%f')
             self.language = data['language']
             self.text = data['text']
-            self.search_cache = copy.deepcopy(data['search_cache'])
-            self.search_cache_keys = copy.copy(data['search_cache_keys'])
+            self.search_cache = copy.deepcopy(data['search_cache']) if not for_gui else {}
+            self.search_cache_keys = copy.copy(data['search_cache_keys']) if not for_gui else []
             self.history = copy.copy(data['history'])
             self.redo_stack = copy.copy(data['redo_stack'])
 
@@ -129,13 +129,13 @@ class AnalysisText:
         with open(self.path, 'r', encoding='utf-8') as file:
             self.old_text = file.read()
 
-    def load_file(self):
+    def load_file(self, for_gui=False):
         """Loads the text from the file."""
         suffix = self.path.suffix
         if suffix in ('.pkl', '.pickle'):
-            self.load_pickle_file()
+            self.load_pickle_file(for_gui)
         elif suffix == '.json':
-            self.load_json_file()
+            self.load_json_file(for_gui)
         elif suffix == '.txt':
             self.load_txt_file()
             self.analyze_txt_file()
@@ -206,22 +206,26 @@ class AnalysisText:
     def get_words_ru_uk(word, lang):
         parsed_word = pymorphy2.MorphAnalyzer(lang=lang).parse(word)
         lexeme = parsed_word[0].lexeme
-        list_words = set(r'\b' + re.escape(form.word) + r'\b' for form in lexeme)
-        return '|'.join(list_words)
+        words = ', '.join(set(form.word for form in lexeme))
+        list_words_for_pattern = set(f'\\b{re.escape(form.word)}\\b' for form in lexeme)
+        return '|'.join(list_words_for_pattern), words
 
     @staticmethod
     def get_words_en(word):
-        return re.escape(SnowballStemmer('english').stem(word))
+        pattern = re.escape(SnowballStemmer('english').stem(word))
+        words = f'{pattern}*'
+        return pattern, words
 
-    def get_pattern_and_text(self, word: str):
+    def get_pattern_and_text_and_words(self, word: str):
         if self.case_sensitive or self.is_float_or_int(word):
-            return f'\\b{re.escape(word)}\\b', self.text
-        word = word.lower()
-        text = self.text.lower()
+            return f'\\b{re.escape(word)}\\b', self.text, word
+        lower_word = word.lower()
+        lower_text = self.text.lower()
         if self.smart_mode:
-            pattern = self.get_words_en(word) if self.language == 'en' else self.get_words_ru_uk(word, self.language)
-            return pattern, text
-        return f'\\b{re.escape(word)}\\b', text
+            pattern, words = self.get_words_en(lower_word) if self.language == 'en' else self.get_words_ru_uk(
+                lower_word, self.language)
+            return pattern, lower_text, words
+        return f'\\b{re.escape(lower_word)}\\b', lower_text, lower_word
 
     def save_cache(self, search_key, res):
         if len(self.search_cache) > 500:
@@ -232,7 +236,7 @@ class AnalysisText:
 
     def update_cache(self, case_sens):
         keys_for_remove = []
-        for key, (value, _) in self.search_cache.items():
+        for key, (value, *_) in self.search_cache.items():
             if re.findall(self.last_pattern, (value.lower() if not case_sens else value)):
                 keys_for_remove.append(key)
         for key in keys_for_remove:
@@ -266,37 +270,66 @@ class AnalysisText:
         self.last_search_key = None
         return 'Words replaced.' if new_word else 'Words removed.'
 
+    def get_all_rows(self, text):
+        all_rows = [row for row in text.split('\n') if row]
+        all_orig_rows = [row for row in self.text.split('\n') if row]
+        return all_rows, all_orig_rows
+
+    @staticmethod
+    def perform_search(words, all_rows, all_orig_rows, pattern):
+        for_log_gui = for_index_gui = res = f'Search for "{words}":\n\n'
+        n_rows_n_words = []
+        found = False
+        n_row = 0
+        for row in all_rows:
+            n_row += 1
+            count_words_in_row = len(re.findall(pattern, row))
+            if count_words_in_row > 0:
+                found = True
+                res += f'№{n_row}: {all_orig_rows[n_row - 1]}\n\n'
+                for_index_gui += f'№{n_row}: {row}\n\n'
+                n_rows_n_words.append((n_row, count_words_in_row))
+        return found, res, for_index_gui, for_log_gui, n_rows_n_words
+
+    @staticmethod
+    def format_for_gui(pattern, index_log_nwd):
+        index, log, nwd = index_log_nwd
+        match = re.finditer(pattern, index)
+        list_index = [(w.start(), w.end()) for w in match]
+        width_1 = max(max(len(str(n_row[0])) for n_row in nwd), 8)
+        width_2 = max(max(len(str(count_words[1])) for count_words in nwd), 11)
+        log += f'{"№ string":^{width_1}}|{"count words":^{width_2}}\n{"-" * (width_1 + width_2 + 1)}\n'
+        log += '\n'.join([f'{n_row:^{width_1}}|{count_words:^{width_2}}' for n_row, count_words in nwd])
+
+        return list_index, log
+
     def search_word(self, word, for_gui=False):
         """Searches for a word in the text using cache."""
-        pattern, text = self.get_pattern_and_text(word)
+        pattern, text, words = self.get_pattern_and_text_and_words(word)
         search_key = f'{pattern} {self.case_sensitive} {self.smart_mode}'
         if search_key in self.search_cache:
             self.last_search_key = search_key
             self.last_pattern = pattern
-            return self.search_cache[search_key][0], self.search_cache[search_key][1]
-        all_rows_in_text = [row for row in text.split('\n') if row]
-        all_orig_rows_in_text = [row for row in self.text.split('\n') if row]
-        list_index = None
-        for_index_gui = ''
-        res = ''
-        n_row = 0
-        for row in all_rows_in_text:
-            n_row += 1
-            if re.findall(pattern, row):
-                res += f'{n_row}: {all_orig_rows_in_text[n_row - 1]}\n\n'
-                for_index_gui += f'{n_row}: {row}\n\n' if for_gui else ''
-        if not res or not word:
+            return self.search_cache[search_key][0], self.search_cache[search_key][1], self.search_cache[search_key][2]
+
+        all_rows, all_orig_rows = self.get_all_rows(text)
+
+        found, res, *index_log_nwd = self.perform_search(words, all_rows, all_orig_rows, pattern)
+
+        if not found or not word:
             self.last_search_key = None
             self.last_pattern = None
-            return f'"{word}" - not exist in text.' if word else 'Enter a word for search.', None
+            return (f'"{word}" - not exist in text.',) if word else ('Enter a word for search.',)
+
+        list_index_for_gui, log_for_gui = None, None
         if for_gui:
-            match = re.finditer(pattern, for_index_gui)
-            list_index = [(w.start(), w.end()) for w in match]
+            list_index_for_gui, log_for_gui = self.format_for_gui(pattern, index_log_nwd)
+
         if not self.redo_stack:
-            self.save_cache(search_key, (res, list_index))
+            self.save_cache(search_key, (res, list_index_for_gui, log_for_gui))
         self.last_search_key = search_key
         self.last_pattern = pattern
-        return res, list_index
+        return res, list_index_for_gui, log_for_gui
 
     def show_list_words(self):
         """Shows a list of unique words."""
@@ -306,7 +339,10 @@ class AnalysisText:
     def __str__(self):
         """Generates a string with the analysis results."""
         self.update_result_counter()
-        res = 'Analysis Results:\n'
-        res += '\n'.join([f'"{key}" -> {self.result_counter[key]}' for key in self.result_counter])
+        width_1 = max(max(len(word) for word in self.result_counter.keys()), 4)
+        width_2 = max(max(len(str(num)) for num in self.result_counter.values()), 5)
+        res = 'Analysis Results:\n\n'
+        res += f'{"word":^{width_1}}|{"count":^{width_2}}\n{"-" * (width_1 + width_2 + 1)}\n'
+        res += '\n'.join([f'{key:^{width_1}}|{self.result_counter[key]:^{width_2}}' for key in self.result_counter])
         res += '\n\nAnalysis performed on: ' + self.datetime_created.strftime('%d %B %Y; %H:%M') + '\n'
         return res

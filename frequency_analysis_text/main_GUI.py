@@ -21,9 +21,8 @@ class MyApp:
         self.btn_font1 = ('Helvetica', 10, 'bold')
         self.btn_font2 = ('Helvetica', 9, 'bold')
         self.txt_font = ('Times New Roman', 12)
-        self.txt_font2 = ('Arial', 11, 'italic')
         self.ent_font = ('Verdana', 11, 'bold')
-        self.lab_font = ('Consolas', 11)
+        self.lab_and_txt_2_font = ('Consolas', 11)
 
         self.btn_redo = None
         self.redo_icon = None
@@ -62,7 +61,7 @@ class MyApp:
         self.frm_load_file.columnconfigure([0, 1], weight=1)
 
         self.lab_path_to_file = tk.Label(self.frm_load_file, text='Path to file...', anchor='w', bg='lightgray',
-                                         font=self.lab_font)
+                                         font=self.lab_and_txt_2_font)
         self.lab_path_to_file.grid(row=0, column=0, padx=5, columnspan=2, sticky='we')
 
         self.btn_load_file = tk.Button(self.frm_load_file, text='Load file', width=8, bg='lightgray',
@@ -85,7 +84,7 @@ class MyApp:
             self.buttons.update({name: b})
 
         self.txt_log_command = tk.Text(self.frm_command, height=7.5, bg='green', background='lightgray', wrap=tk.WORD,
-                                       font=self.txt_font2)
+                                       font=self.lab_and_txt_2_font)
         self.txt_log_command.grid(row=0, column=4, rowspan=2, padx=(10, 5), pady=5, sticky='ew')
 
         self.frm_search = tk.Frame(self.root, background='gray', height=25)
@@ -241,16 +240,16 @@ class MyApp:
             tag = False
             word = self.ent_search_word.get().strip()
             mess_for_text = self.obj_text.text
-            mess_for_log, list_index = self.obj_text.search_word(word, True)
+            mess_for_log, *list_index_and_for_log = self.obj_text.search_word(word, True)
             if not mess_for_log.endswith('" - not exist in text.') and mess_for_log != 'Enter a word for search.':
                 tag = True
                 mess_for_text = mess_for_log
-                mess_for_log = f'"{word}" - found.'
+                mess_for_log = list_index_and_for_log[1]
             self.ent_search_word.delete(0, tk.END)
             self.txt_log_command.replace('1.0', tk.END, mess_for_log)
             self.txt_text.replace('1.0', tk.END, mess_for_text)
             if tag:
-                for start, end in list_index:
+                for start, end in list_index_and_for_log[0]:
                     start_index = f"1.0+{start}c"
                     end_index = f"1.0+{end}c"
                     self.txt_text.tag_add('light', start_index, end_index)
@@ -306,7 +305,7 @@ class MyApp:
                 self.text_on()
                 self.return_all()
                 self.obj_text = AnalysisText(file_path)
-                self.obj_text.load_file()
+                self.obj_text.load_file(True)
                 self.txt_log_command.replace('1.0', tk.END, str(self.obj_text))
                 self.txt_text.replace('1.0', tk.END, self.obj_text.text)
                 self.lab_path_to_file.config(text=file_path, background=self.soft_green)
