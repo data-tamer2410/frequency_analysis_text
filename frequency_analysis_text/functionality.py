@@ -98,7 +98,7 @@ class AnalysisText:
     def show_result(self):
         return self
 
-    def load_pickle_file(self,for_gui):
+    def load_pickle_file(self, for_gui):
         with open(self.path, 'rb') as file:
             obj = pickle.load(file)
             self.old_text = obj.old_text
@@ -111,7 +111,7 @@ class AnalysisText:
             self.history = copy.copy(obj.history)
             self.redo_stack = copy.copy(obj.redo_stack)
 
-    def load_json_file(self,for_gui):
+    def load_json_file(self, for_gui):
         with open(self.path, 'r', encoding='utf-8') as file:
             data = json.load(file)
             self.old_text = data['old_text']
@@ -277,7 +277,8 @@ class AnalysisText:
 
     @staticmethod
     def perform_search(words, all_rows, all_orig_rows, pattern):
-        for_log_gui = for_index_gui = res = f'Search for "{words}":\n\n'
+        res, for_index_gui = '', ''
+        for_log_gui = f'Search for "{words}":\n\n'
         n_rows_n_words = []
         found = False
         n_row = 0
@@ -292,14 +293,16 @@ class AnalysisText:
         return found, res, for_index_gui, for_log_gui, n_rows_n_words
 
     @staticmethod
-    def format_for_gui(pattern, index_log_nwd):
-        index, log, nwd = index_log_nwd
+    def format_for_gui(pattern, index_log_nrw):
+        index, log, n_row_word = index_log_nrw
+        sum_words = sum(n_word[1] for n_word in n_row_word)
         match = re.finditer(pattern, index)
         list_index = [(w.start(), w.end()) for w in match]
-        width_1 = max(max(len(str(n_row[0])) for n_row in nwd), 8)
-        width_2 = max(max(len(str(count_words[1])) for count_words in nwd), 11)
+        width_1 = max(max(len(str(n_row[0])) for n_row in n_row_word), 8)
+        width_2 = max(max(len(str(count_words[1])) for count_words in n_row_word), 11)
+        log += f'Found words: {sum_words}.\n\n'
         log += f'{"№ string":^{width_1}}|{"count words":^{width_2}}\n{"-" * (width_1 + width_2 + 1)}\n'
-        log += '\n'.join([f'{n_row:^{width_1}}|{count_words:^{width_2}}' for n_row, count_words in nwd])
+        log += '\n'.join([f'{n_row:^{width_1}}|{count_words:^{width_2}}' for n_row, count_words in n_row_word])
 
         return list_index, log
 
@@ -314,7 +317,7 @@ class AnalysisText:
 
         all_rows, all_orig_rows = self.get_all_rows(text)
 
-        found, res, *index_log_nwd = self.perform_search(words, all_rows, all_orig_rows, pattern)
+        found, res, *index_log_nrw = self.perform_search(words, all_rows, all_orig_rows, pattern)
 
         if not found or not word:
             self.last_search_key = None
@@ -323,7 +326,7 @@ class AnalysisText:
 
         list_index_for_gui, log_for_gui = None, None
         if for_gui:
-            list_index_for_gui, log_for_gui = self.format_for_gui(pattern, index_log_nwd)
+            list_index_for_gui, log_for_gui = self.format_for_gui(pattern, index_log_nrw)
 
         if not self.redo_stack:
             self.save_cache(search_key, (res, list_index_for_gui, log_for_gui))
