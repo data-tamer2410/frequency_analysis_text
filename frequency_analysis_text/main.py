@@ -4,25 +4,41 @@ from frequency_analysis_text.functionality import AnalysisText, ProgramState, Em
 import sys
 
 
-def show_info_commands():
-    """Shows information about available commands."""
-    return ("1. '!help' to show information about commands;\n"
-            "2. '!enter_file' for enter new file;\n"
-            "3. '!list_words' to show all unique words;\n"
-            "4. '!case_sens' to show the status case sensitive;\n"
-            "5. '!case_sens_on' to turn on case sensitive;\n"
-            "6. '!case_sens_off' to turn off case sensitive;\n"
-            "7. '!smart_mode' to show the status smart mode;\n"
-            "8. '!smart_mode_on' to enable smart mode;\n"
-            "9. '!smart_mode_off' to disable smart mode;\n"
-            "10. '!restart_text' to restart the text;\n"
-            "11. '!text' to show the current text;\n"
-            "12. '!result' to show analysis results;\n"
-            "13. '!remove_words' to remove words from the text;\n"
-            "14. '!replace_words' to replace words in the text;\n"
-            "15. '!save_to_json' to save the text analysis to a JSON file;\n"
-            "16. '!save_to_pickle' to save the text analysis to a Pickle file;\n"
-            "17. '!close' to close the program.\n")
+def show_info_commands(for_gui=False):
+    if for_gui:
+        return ("Smart mode: Toggle smart mode for advanced text analysis.\n"
+                "Root mode: Toggle root mode for root word analysis.\n"
+                "To pickle: Save the current text analysis to a pickle file.\n"
+                "Remove: Remove selected words from the text.\n"
+                "Case sens: Toggle case sensitivity in text analysis.\n"
+                "Restart: Restart the text analysis with the original text.\n"
+                "To json: Save the current text analysis to a JSON file.\n"
+                "Result: Update the text display with the current analysis results.\n"
+                "Load File: Load a new text file into the application.\n"
+                "Undo: Undo the last text modification.\n"
+                "Redo: Redo the last undone text modification.")
+    return (
+        "1. '!help' to show information about commands;\n"
+        "2. '!enter_file' for enter new file;\n"
+        "3. '!list_words' to show all unique words;\n"
+        "4. '!case_sens' to show the status case sensitive;\n"
+        "5. '!case_sens_on' to turn on case sensitive;\n"
+        "6. '!case_sens_off' to turn off case sensitive;\n"
+        "7. '!smart_mode' to show the status smart mode;\n"
+        "8. '!smart_mode_on' to enable smart mode;\n"
+        "9. '!smart_mode_off' to disable smart mode;\n"
+        "10. '!restart_text' to restart the text;\n"
+        "11. '!text' to show the current text;\n"
+        "12. '!result' to show analysis results;\n"
+        "13. '!remove_words' to remove words from the text;\n"
+        "14. '!replace_words' to replace words in the text;\n"
+        "15. '!save_to_json' to save the text analysis to a JSON file;\n"
+        "16. '!save_to_pickle' to save the text analysis to a Pickle file;\n"
+        "17. '!root_mode' to show the status root mode;\n"
+        "18. '!root_mode_on' to enable root mode;\n"
+        "19. '!root_mode_off' to disable root mode;\n"
+        "20. '!close' to close the program.\n"
+    )
 
 
 def parse_input(user_input: str):
@@ -42,6 +58,9 @@ def user_command_handler(user_input: str, obj_text: AnalysisText, state: Program
         '!replace_words': obj_text.remove_or_replace_last_words
     }
     command_dict = {
+        '!root_mode_on': obj_text.root_mode_on,
+        '!root_mode_off': obj_text.root_mode_off,
+        '!root_mode': obj_text.show_root_mode,
         '!case_sens_on': obj_text.case_sens_on,
         '!case_sens_off': obj_text.case_sens_off,
         '!case_sens': obj_text.show_case_sens,

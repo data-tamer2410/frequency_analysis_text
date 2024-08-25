@@ -1,101 +1,57 @@
-# Text Analysis Program
+# Text Analysis Project
 
-This program is designed to analyze text files and perform various text manipulations.
-It can be used via the console or through a graphical user interface (GUI) created with Tkinter.
+This project provides a comprehensive text analysis tool that includes several commands to manage, analyze, and manipulate text data.
 
-## Commands
+## Features
 
-### Console Commands
+- **Root Mode**:
+  - `!root_mode_on` to enable root mode.
+  - `!root_mode_off` to disable root mode.
+  - `!root_mode` to show the status of root mode.
 
-- `!help` - Show information about available commands.
-- `!enter_file` - Enter a new file path to load the text for analysis.
-- `!list_words` - Show all unique words found in the text.
-- `!case_sens` - Show the current status of case sensitivity.
-- `!case_sens_on` - Turn on case sensitivity for text analysis.
-- `!case_sens_off` - Turn off case sensitivity for text analysis.
-- `!smart_mode` - Show the current status of smart mode.
-- `!smart_mode_on` - Enable smart mode to search for words in various forms.
-- `!smart_mode_off` - Disable smart mode.
-- `!restart_text` - Restart the text to its original state.
-- `!text` - Show the current text loaded in the program.
-- `!result` - Show the results of the text analysis.
-- `!remove_words` - Remove specified words from the text.
-- `!replace_words` - Replace specified words in the text.
-- `!save_to_json` - Save the current text analysis to a JSON file.
-- `!save_to_pickle` - Save the current text analysis to a Pickle file.
-- `!close` - Close the program.
+- **Case Sensitivity**:
+  - `!case_sens_on` to turn on case sensitivity.
+  - `!case_sens_off` to turn off case sensitivity.
+  - `!case_sens` to show the status of case sensitivity.
 
-### GUI
+- **Smart Mode**:
+  - `!smart_mode_on` to enable smart mode.
+  - `!smart_mode_off` to disable smart mode.
+  - `!smart_mode` to show the status of smart mode.
 
-The GUI provides a more interactive way to use the program. You can:
+- **Text Management**:
+  - `!enter_file` to enter a new file.
+  - `!restart_text` to restart the text.
+  - `!text` to show the current text.
+  - `!result` to show analysis results.
+  - `!remove_words` to remove words from the text.
+  - `!replace_words` to replace words in the text.
+  - `!list_words` to show all unique words.
 
-- Load a file by clicking the "Load File" button.
-- Toggle case sensitivity and smart mode with the respective buttons.
-- View and modify text using the text area and buttons.
-- Save the analysis results using the "Save to JSON" and "Save to Pickle" buttons.
-- Restart the text or close the program using the provided buttons.
+- **Save Analysis**:
+  - `!save_to_json` to save the text analysis to a JSON file.
+  - `!save_to_pickle` to save the text analysis to a Pickle file.
 
-## Usage
+- **Help**:
+  - `!help` to show information about commands.
 
-1. Start the program and load a text file.
-2. Use the GUI buttons to toggle settings, modify text, and view results.
-3. Save your analysis results or restart the text as needed.
-4. Close the program using the "Close" button.
+- **Exit**:
+  - `!close` to close the program.
 
-For more details or help, use the `!help` command in the console.
+## GUI Features
 
-## License
+The GUI interface provides the following buttons for easy access to the functionalities:
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-----------------------------------------------------------------------------------------------------
-
-# Програма для аналізу тексту
-
-Ця програма призначена для аналізу текстових файлів і виконання різних маніпуляцій з текстом.
-Вона може використовуватися через консоль або через графічний інтерфейс користувача (GUI), створений з Tkinter.
-
-## Команди
-
-### Консольні команди
-
-- `!help` - Показати інформацію про доступні команди.
-- `!enter_file` - Ввести шлях до нового файлу для завантаження тексту для аналізу.
-- `!list_words` - Показати всі унікальні слова, знайдені в тексті.
-- `!case_sens` - Показати поточний статус чутливості до регістру.
-- `!case_sens_on` - Увімкнути чутливість до регістру для аналізу тексту.
-- `!case_sens_off` - Вимкнути чутливість до регістру для аналізу тексту.
-- `!smart_mode` - Показати поточний статус розумного режиму.
-- `!smart_mode_on` - Увімкнути розумний режим для пошуку слів у різних формах.
-- `!smart_mode_off` - Вимкнути розумний режим.
-- `!restart_text` - Перезапустити текст до його первісного стану.
-- `!text` - Показати поточний текст, завантажений у програму.
-- `!result` - Показати результати аналізу тексту.
-- `!remove_words` - Видалити зазначені слова з тексту.
-- `!replace_words` - Замінити зазначені слова в тексті.
-- `!save_to_json` - Зберегти аналіз тексту у файл JSON.
-- `!save_to_pickle` - Зберегти аналіз тексту у файл Pickle.
-- `!close` - Закрити програму.
-
-### GUI
-
-GUI забезпечує більш інтерактивний спосіб використання програми. Ви можете:
-
-- Завантажити файл, натиснувши кнопку "Завантажити файл".
-- Перемикати чутливість до регістру і розумний режим за допомогою відповідних кнопок.
-- Переглядати та модифікувати текст, використовуючи текстову область і кнопки.
-- Зберегти результати аналізу, використовуючи кнопки "Зберегти у JSON" та "Зберегти у Pickle".
-- Перезапустити текст або закрити програму за допомогою наданих кнопок.
-
-## Використання
-
-1. Запустіть програму і завантажте текстовий файл.
-2. Використовуйте кнопки GUI для перемикання налаштувань, модифікації тексту та перегляду результатів.
-3. Зберігайте результати аналізу або перезапускайте текст за потреби.
-4. Закрийте програму, натиснувши кнопку "Закрити".
-
-Для отримання додаткової інформації або допомоги використовуйте команду `!help` у консолі.
-
-## Ліцензія
-
-Цей проект ліцензовано на умовах ліцензії MIT - див. файл [LICENSE](LICENSE) для деталей.
+- **Enter File**: Opens a dialog to select and enter a new file.
+- **Show Text**: Displays the current text.
+- **Show Result**: Displays the analysis results.
+- **Remove Words**: Removes specific words from the text.
+- **Replace Words**: Replaces specific words in the text.
+- **Save to JSON**: Saves the analysis to a JSON file.
+- **Save to Pickle**: Saves the analysis to a Pickle file.
+- **Show Unique Words**: Displays all unique words in the text.
+- **Restart Text**: Restarts the text.
+- **Toggle Root Mode**: Enables or disables root mode.
+- **Toggle Case Sensitivity**: Enables or disables case sensitivity.
+- **Toggle Smart Mode**: Enables or disables smart mode.
+- **Close**: Closes the program.

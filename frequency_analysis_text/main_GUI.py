@@ -73,10 +73,10 @@ class MyApp:
 
         self.frm_command.columnconfigure(4, weight=1)
 
-        self.dict_commands = {'Smart mode': ((0, 0), self.smart_mode), 'Result': ((0, 1), self.update_result),
+        self.dict_commands = {'Smart mode': ((0, 0), self.smart_mode), 'Root mode': ((0, 1), self.root_mode),
                               'To pickle': ((0, 2), self.save_to_pickle), 'Remove': ((0, 3), self.remove_words),
                               'Case sens': ((1, 0), self.case_sens), 'Restart': ((1, 1), self.restart_text),
-                              'To json': ((1, 2), self.save_to_json), 'List words': ((1, 3), self.list_words)}
+                              'To json': ((1, 2), self.save_to_json), 'Result': ((1, 3), self.update_result)}
         for name, row_col_com in self.dict_commands.items():
             b = tk.Button(self.frm_command, text=name, width=10, height=3, background='lightgray',
                           command=row_col_com[1], activebackground='lightgray', font=self.btn_font1)
@@ -156,7 +156,7 @@ class MyApp:
 
     @staticmethod
     def show_help():
-        messagebox.showinfo('Help', show_info_commands())
+        messagebox.showinfo('Help', show_info_commands(True))
 
     def text_off(self):
         self.txt_text.config(state='disabled')
@@ -173,11 +173,18 @@ class MyApp:
             self.txt_log_command.replace('1.0', tk.END, str(self.obj_text))
             self.text_off()
 
-    def list_words(self):
+    def root_mode(self):
         if self.obj_text:
             self.text_on()
-            res = ', '.join(self.obj_text.show_list_words())
-            self.txt_log_command.replace('1.0', tk.END, res)
+            if not self.obj_text.root_mode:
+                mess = self.obj_text.root_mode_on()
+                self.buttons['Root mode'].config(bg=self.soft_green, activebackground=self.soft_green)
+                self.buttons['Case sens'].config(bg=self.soft_red, activebackground=self.soft_red)
+                self.buttons['Smart mode'].config(bg=self.soft_red, activebackground=self.soft_red)
+            else:
+                mess = self.obj_text.root_mode_off()
+                self.buttons['Root mode'].config(bg=self.soft_red, activebackground=self.soft_red)
+            self.txt_log_command.replace('1.0', tk.END, mess)
             self.text_off()
 
     def smart_mode(self):
@@ -187,6 +194,7 @@ class MyApp:
                 mess = self.obj_text.smart_mode_on()
                 self.buttons['Smart mode'].config(bg=self.soft_green, activebackground=self.soft_green)
                 self.buttons['Case sens'].config(bg=self.soft_red, activebackground=self.soft_red)
+                self.buttons['Root mode'].config(bg=self.soft_red, activebackground=self.soft_red)
             else:
                 mess = self.obj_text.smart_mode_off()
                 self.buttons['Smart mode'].config(bg=self.soft_red, activebackground=self.soft_red)
@@ -200,6 +208,7 @@ class MyApp:
                 mess = self.obj_text.case_sens_on()
                 self.buttons['Case sens'].config(bg=self.soft_green, activebackground=self.soft_green)
                 self.buttons['Smart mode'].config(bg=self.soft_red, activebackground=self.soft_red)
+                self.buttons['Root mode'].config(bg=self.soft_red, activebackground=self.soft_red)
             else:
                 mess = self.obj_text.case_sens_off()
                 self.buttons['Case sens'].config(bg=self.soft_red, activebackground=self.soft_red)
@@ -290,6 +299,7 @@ class MyApp:
         self.ent_search_word.delete(0, tk.END)
         self.buttons['Case sens'].config(bg='lightgray', activebackground='lightgray')
         self.buttons['Smart mode'].config(bg='lightgray', activebackground='lightgray')
+        self.buttons['Root mode'].config(bg='lightgray', activebackground='lightgray')
         self.buttons['To json'].config(bg='lightgray', activebackground='lightgray')
         self.buttons['To pickle'].config(bg='lightgray', activebackground='lightgray')
         self.txt_text.delete('1.0', tk.END)

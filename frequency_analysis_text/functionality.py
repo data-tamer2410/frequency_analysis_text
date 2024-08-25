@@ -40,6 +40,7 @@ class AnalysisText:
         """Initializes with the path to the file."""
         self.path = Path(path)
         self.new_file = False
+        self.root_mode = False
         self.case_sensitive = False
         self.smart_mode = False
         self.last_search_key = None
@@ -56,10 +57,28 @@ class AnalysisText:
         self.history = []
         self.redo_stack = []
 
+    def root_mode_on(self):
+        self.root_mode = True
+        mess = (
+            f'Root mode on'
+            f'{", smart mode off, case sensitive off." if self.smart_mode or self.case_sensitive else "."}'
+        )
+        self.smart_mode = False
+        self.case_sensitive = False
+        return mess
+
+    def root_mode_off(self):
+        self.root_mode = False
+        return 'Root mode off.'
+
+    def show_root_mode(self):
+        return f'Root mode: {"on." if self.root_mode else "off."}'
+
     def case_sens_on(self):
         self.case_sensitive = True
-        mess = f'Case sensitive on{", smart mode off." if self.smart_mode else "."}'
+        mess = f'Case sensitive on{", smart mode off, root mode off." if self.smart_mode or self.root_mode else "."}'
         self.smart_mode = False
+        self.root_mode = False
         return mess
 
     def case_sens_off(self):
@@ -72,8 +91,12 @@ class AnalysisText:
     def smart_mode_on(self):
         if self.language in self.support_language:
             self.smart_mode = True
-            mess = f'Smart mode on{", case sensitive off." if self.case_sensitive else "."}'
+            mess = (
+                f'Smart mode on'
+                f'{", case sensitive off, root mode off." if self.case_sensitive or self.root_mode else "."}'
+            )
             self.case_sensitive = False
+            self.root_mode = False
             return mess
         return (f'At the moment the mode "__smart_mode__" only supports {self.support_language} languages,'
                 f' your text is in the {self.language} language.')
@@ -195,14 +218,6 @@ class AnalysisText:
         return path, f'File save to {"pickle" if suffix == ".pkl" or suffix == ".pickle" else "json"}.'
 
     @staticmethod
-    def is_float_or_int(word):
-        try:
-            float(word)
-            return True
-        except ValueError:
-            return False
-
-    @staticmethod
     def get_words_ru_uk(word, lang):
         parsed_word = pymorphy2.MorphAnalyzer(lang=lang).parse(word)
         lexeme = parsed_word[0].lexeme
@@ -213,14 +228,16 @@ class AnalysisText:
     @staticmethod
     def get_words_en(word):
         pattern = re.escape(SnowballStemmer('english').stem(word))
-        words = f'{pattern}*'
+        words = f'*{pattern}*'
         return pattern, words
 
     def get_pattern_and_text_and_words(self, word: str):
-        if self.case_sensitive or self.is_float_or_int(word):
+        if self.case_sensitive:
             return f'\\b{re.escape(word)}\\b', self.text, word
         lower_word = word.lower()
         lower_text = self.text.lower()
+        if self.root_mode:
+            return f'\\b\\w*{re.escape(lower_word)}\\w*\\b', lower_text, f'*{lower_word}*'
         if self.smart_mode:
             pattern, words = self.get_words_en(lower_word) if self.language == 'en' else self.get_words_ru_uk(
                 lower_word, self.language)
@@ -257,7 +274,7 @@ class AnalysisText:
         if not self.last_pattern:
             return 'First find the word in the text.'
         self.save_state()
-        case_sens = True if self.last_search_key.endswith('True False') else False
+        case_sens = True if self.last_search_key.endswith('True False False') else False
         if case_sens:
             self.text = re.sub(self.last_pattern, new_word, self.text)
         else:
@@ -309,7 +326,7 @@ class AnalysisText:
     def search_word(self, word, for_gui=False):
         """Searches for a word in the text using cache."""
         pattern, text, words = self.get_pattern_and_text_and_words(word)
-        search_key = f'{pattern} {self.case_sensitive} {self.smart_mode}'
+        search_key = f'{pattern} {self.case_sensitive} {self.smart_mode} {self.root_mode}'
         if search_key in self.search_cache:
             self.last_search_key = search_key
             self.last_pattern = pattern
