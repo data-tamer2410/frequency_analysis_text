@@ -98,7 +98,7 @@ class AnalysisText:
             self.case_sensitive = False
             self.root_mode = False
             return mess
-        return (f'At the moment the mode "__smart_mode__" only supports {self.support_language} languages,'
+        return (f'At the moment the Smart mode only supports {self.support_language} languages,'
                 f' your text is in the {self.language} language.')
 
     def smart_mode_off(self):

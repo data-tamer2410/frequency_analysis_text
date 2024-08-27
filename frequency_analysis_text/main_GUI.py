@@ -192,9 +192,10 @@ class MyApp:
             self.text_on()
             if not self.obj_text.smart_mode:
                 mess = self.obj_text.smart_mode_on()
-                self.buttons['Smart mode'].config(bg=self.soft_green, activebackground=self.soft_green)
-                self.buttons['Case sens'].config(bg=self.soft_red, activebackground=self.soft_red)
-                self.buttons['Root mode'].config(bg=self.soft_red, activebackground=self.soft_red)
+                if not mess.startswith('At the moment the Smart mode only supports'):
+                    self.buttons['Smart mode'].config(bg=self.soft_green, activebackground=self.soft_green)
+                    self.buttons['Case sens'].config(bg=self.soft_red, activebackground=self.soft_red)
+                    self.buttons['Root mode'].config(bg=self.soft_red, activebackground=self.soft_red)
             else:
                 mess = self.obj_text.smart_mode_off()
                 self.buttons['Smart mode'].config(bg=self.soft_red, activebackground=self.soft_red)
