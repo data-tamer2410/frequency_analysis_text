@@ -237,7 +237,7 @@ class AnalysisText:
         """
         Updates the result counter with word and number frequencies.
         """
-        pattern = r"(?:\"\w+\"|\b\w+(?:[-']\w+)*\b|\b\d+(?:\.\d+)?\b)"
+        pattern = r"(?:\"\w+(?:[-']\w+)*\"|\b\w+(?:[-']\w+)*\b|\b\d+(?:\.\d+)?\b)"
         counter_text = Counter(re.findall(pattern, self.text))
         if not counter_text:
             raise EmptyFileError
