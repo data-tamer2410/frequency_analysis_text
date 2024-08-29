@@ -237,7 +237,7 @@ class AnalysisText:
         """
         Updates the result counter with word and number frequencies.
         """
-        pattern = r"\b\w+\b|\b\d+\b|\b\d+\.\d+\b"
+        pattern = r"(?:\"\w+\"|\b\w+(?:[-']\w+)*\b|\b\d+(?:\.\d+)?\b)"
         counter_text = Counter(re.findall(pattern, self.text))
         if not counter_text:
             raise EmptyFileError
@@ -309,7 +309,7 @@ class AnalysisText:
         parsed_word = pymorphy2.MorphAnalyzer(lang=lang).parse(word)
         lexeme = parsed_word[0].lexeme
         words = ", ".join(set(form.word for form in lexeme))
-        list_words_for_pattern = set(f"\\b{re.escape(form.word)}\\b" for form in lexeme)
+        list_words_for_pattern = set(rf"\b{re.escape(form.word)}\b" for form in lexeme)
         return "|".join(list_words_for_pattern), words
 
     @staticmethod
@@ -317,7 +317,7 @@ class AnalysisText:
         """
         Returns patterns and words for English.
         """
-        pattern = re.escape(SnowballStemmer("english").stem(word))
+        pattern = rf"\b\w*{re.escape(SnowballStemmer('english').stem(word))}\w*\b"
         words = f"*{pattern}*"
         return pattern, words
 
@@ -326,12 +326,12 @@ class AnalysisText:
         Returns the pattern and text for searching a word.
         """
         if self.case_sensitive:
-            return f"\\b{re.escape(word)}\\b", self.text, word
+            return rf"\b{re.escape(word)}\b", self.text, word
         lower_word = word.lower()
         lower_text = self.text.lower()
         if self.root_mode:
             return (
-                f"\\b\\w*{re.escape(lower_word)}\\w*\\b",
+                rf"\b\w*{re.escape(lower_word)}\w*\b",
                 lower_text,
                 f"*{lower_word}*",
             )
@@ -342,7 +342,7 @@ class AnalysisText:
                 else self.get_words_ru_uk(lower_word, self.language)
             )
             return pattern, lower_text, words
-        return f"\\b{re.escape(lower_word)}\\b", lower_text, lower_word
+        return rf"\b{re.escape(lower_word)}\b", lower_text, lower_word
 
     def save_cache(self, search_key, res):
         """
