@@ -1,4 +1,4 @@
-FROM python:3.10.11
+FROM python:3.10.11-slim
 LABEL authors="Professional"
 
 WORKDIR /frequency_analysis_text
