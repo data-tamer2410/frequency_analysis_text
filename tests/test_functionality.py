@@ -1,14 +1,15 @@
+"""Testing project."""
+
 from pathlib import Path
 from datetime import date
-from frequency_analysis_text import (
+from frequency_analysis_text.functionality import (
     AnalysisText,
     show_info_commands,
-    parse_input,
     EmptyFileError,
     InvalidFileFormatError,
-    user_command_handler,
     ProgramState,
 )
+from frequency_analysis_text.main import user_command_handler, parse_input
 
 
 def test_show_info_commands():
@@ -60,7 +61,8 @@ def test_lang_detected():
     obj_ru = AnalysisText("tests/texts/text_ru.txt")
     obj_de = AnalysisText("tests/texts/text_de.txt")
 
-    [el.load_file() for el in (obj_en, obj_uk, obj_ru, obj_de)]
+    for el in (obj_en, obj_uk, obj_ru, obj_de):
+        el.load_file()
 
     assert (obj_en.language, obj_uk.language, obj_ru.language, obj_de.language) == (
         "en",

@@ -6,15 +6,16 @@ The application allows users to load text files, search and replace words,
 and perform various text analysis operations.
 """
 
+import os.path
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import ImageTk, Image
 from frequency_analysis_text.functionality import (
+    show_info_commands,
     AnalysisText,
     InvalidFileFormatError,
     EmptyFileError,
 )
-from frequency_analysis_text.main import show_info_commands
 
 
 class MyApp:
@@ -66,6 +67,8 @@ class MyApp:
         self.buttons = {}
 
         self.obj_text = None
+
+        self.base_dir = os.path.dirname(__file__)
 
         self.create_widgets()
 
@@ -168,7 +171,7 @@ class MyApp:
         )
         self.ent_search_word.grid(row=0, column=1, padx=(0, 20), sticky="we")
 
-        im = Image.open("undo.png").resize((20, 20))
+        im = Image.open(f"{self.base_dir}/undo.png").resize((20, 20))
         self.undo_icon = ImageTk.PhotoImage(image=im)
 
         # noinspection PyTypeChecker
@@ -183,7 +186,7 @@ class MyApp:
         )
         self.btn_undo.grid(row=0, column=2, padx=(0, 10), sticky="w")
 
-        im = Image.open("redo.png").resize((20, 20))
+        im = Image.open(f"{self.base_dir}/redo.png").resize((20, 20))
         self.redo_icon = ImageTk.PhotoImage(image=im)
 
         # noinspection PyTypeChecker
