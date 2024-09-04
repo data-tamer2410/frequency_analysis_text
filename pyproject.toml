@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "frequency_analysis_text"
-version = "2.4.9"
+version = "2.4.10"
 description = "This project is a program designed for analyzing text files."
 authors = ["Vitaliy-datascientist <vitaliy.dayneko2410@gmail.com>"]
 readme = "README.txt"
 license = 'MIT'
 
 [tool.poetry.dependencies]
-python = "3.10.11"
+python = "~3.10"
 pymorphy2 = "^0.9.1"
 pymorphy2-dicts-uk = "^2.4.1.1.1460299261"
 pymorphy2-dicts = "^2.4.393442.3710985"
