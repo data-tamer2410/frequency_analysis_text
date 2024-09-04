@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "frequency_analysis_text"
-version = "2.4.10"
+version = "2.4.11"
 description = "This project is a program designed for analyzing text files."
-authors = ["Vitaliy-datascientist <vitaliy.dayneko2410@gmail.com>"]
+authors = ["data-tamer2410 <vitaliy.dayneko2410@gmail.com>"]
 readme = "README.txt"
 license = 'MIT'
 
