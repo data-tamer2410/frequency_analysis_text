@@ -254,13 +254,16 @@ class MyApp:
         """Set colors for widgets."""
         self.root.config(bg=self.theme_color1)
         for name, button in self.buttons.items():
-            if self.obj_text and (
-                self.obj_text.case_sensitive
-                or self.obj_text.smart_mode
-                or self.obj_text.root_mode
+            if (
+                self.buttons["Smart mode"].cget("bg")
+                in (self.soft_red, self.soft_green)
+                or self.buttons["Case sens"].cget("bg")
+                in (self.soft_red, self.soft_green)
+                or self.buttons["Root mode"].cget("bg")
+                in (self.soft_red, self.soft_green)
+                and name in ("Smart mode", "Case sens", "Root mode")
             ):
-                if name in ("Smart mode", "Case sens", "Root mode"):
-                    continue
+                continue
             button.config(bg=self.theme_color2, activebackground=self.theme_color2)
 
         self.frm_load_file.config(bg=self.theme_color1)
