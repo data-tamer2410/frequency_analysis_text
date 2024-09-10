@@ -6,6 +6,7 @@ The application allows users to load text files, search and replace words,
 and perform various text analysis operations.
 """
 
+import json
 import os.path
 import tkinter as tk
 from tkinter import filedialog, messagebox
@@ -27,10 +28,11 @@ class MyApp:
         """
         Initialize the application, create the main window and widgets.
         """
+        self.base_dir = os.path.dirname(__file__)
+
         self.root = tk.Tk()
         self.root.title("Analysis text")
         self.root.geometry("800x500")
-        self.root.configure(background="gray")
 
         self.menu_bar = tk.Menu(self.root)
         self.root.config(menu=self.menu_bar)
@@ -44,6 +46,9 @@ class MyApp:
         self.ent_font = ("Verdana", 11, "bold")
         self.lab_and_txt_2_font = ("Consolas", 11)
 
+        self.theme_color1 = None
+        self.theme_color2 = None
+        self.theme_menu = None
         self.btn_redo = None
         self.redo_icon = None
         self.btn_undo = None
@@ -65,12 +70,16 @@ class MyApp:
         self.lab_path_to_file = None
         self.frm_load_file = None
         self.buttons = {}
+        self.support_themes = {
+            "Midnight": tk.BooleanVar(),
+            "Night": tk.BooleanVar(),
+            "Light": tk.BooleanVar(),
+        }
 
         self.obj_text = None
 
-        self.base_dir = os.path.dirname(__file__)
-
         self.create_widgets()
+        self.set_theme_color(first_start=True)
 
     def create_widgets(self):
         """
@@ -80,7 +89,16 @@ class MyApp:
         self.menu_bar.add_cascade(label="Help", menu=self.help_menu)
         self.help_menu.add_command(label="Command info", command=self.show_help)
 
-        self.frm_load_file = tk.Frame(self.root, height=25, background="gray")
+        self.theme_menu = tk.Menu(self.menu_bar, tearoff=0)
+        self.menu_bar.add_cascade(label="Theme", menu=self.theme_menu)
+        for theme in self.support_themes:
+            self.theme_menu.add_checkbutton(
+                label=theme,
+                variable=self.support_themes[theme],
+                command=lambda t=theme: self.set_theme_color(t),
+            )
+
+        self.frm_load_file = tk.Frame(self.root, height=25)
         self.frm_load_file.pack(fill=tk.X, pady=(5, 10))
 
         self.frm_load_file.columnconfigure([0, 1], weight=1)
@@ -89,7 +107,6 @@ class MyApp:
             self.frm_load_file,
             text="Path to file...",
             anchor="w",
-            bg="lightgray",
             font=self.lab_and_txt_2_font,
         )
         self.lab_path_to_file.grid(row=0, column=0, padx=5, columnspan=2, sticky="we")
@@ -98,15 +115,13 @@ class MyApp:
             self.frm_load_file,
             text="Load file",
             width=8,
-            bg="lightgray",
             command=self.load_file,
-            activebackground="lightgray",
             font=self.btn_font2,
         )
         self.btn_load_file.grid(row=0, column=2, padx=5)
 
         self.frm_command = tk.Frame(
-            self.root, height=200, bg="gray", borderwidth=5, relief=tk.GROOVE
+            self.root, height=200, borderwidth=5, relief=tk.GROOVE
         )
         self.frm_command.pack(fill=tk.X, padx=5)
 
@@ -128,9 +143,7 @@ class MyApp:
                 text=name,
                 width=10,
                 height=3,
-                background="lightgray",
                 command=row_col_com[1],
-                activebackground="lightgray",
                 font=self.btn_font1,
             )
             b.grid(
@@ -142,7 +155,6 @@ class MyApp:
             self.frm_command,
             height=7.5,
             bg="green",
-            background="lightgray",
             wrap=tk.WORD,
             font=self.lab_and_txt_2_font,
         )
@@ -150,7 +162,7 @@ class MyApp:
             row=0, column=4, rowspan=2, padx=(10, 5), pady=5, sticky="ew"
         )
 
-        self.frm_search = tk.Frame(self.root, background="gray", height=25)
+        self.frm_search = tk.Frame(self.root, height=25)
         self.frm_search.pack(pady=(10, 0), fill=tk.X)
 
         self.frm_search.columnconfigure([1, 5], weight=1)
@@ -159,16 +171,12 @@ class MyApp:
             self.frm_search,
             text="Search word",
             width=15,
-            background="lightgray",
             command=self.search,
-            activebackground="lightgray",
             font=self.btn_font2,
         )
         self.btn_search_word.grid(row=0, column=0, padx=(15, 5), sticky="w")
 
-        self.ent_search_word = tk.Entry(
-            self.frm_search, background="lightgray", font=self.ent_font
-        )
+        self.ent_search_word = tk.Entry(self.frm_search, font=self.ent_font)
         self.ent_search_word.grid(row=0, column=1, padx=(0, 20), sticky="we")
 
         im = Image.open(f"{self.base_dir}/undo.png").resize((20, 20))
@@ -180,8 +188,6 @@ class MyApp:
             image=self.undo_icon,
             width=25,
             height=25,
-            bg="lightgray",
-            activebackground="lightgray",
             command=self.undo,
         )
         self.btn_undo.grid(row=0, column=2, padx=(0, 10), sticky="w")
@@ -195,8 +201,6 @@ class MyApp:
             image=self.redo_icon,
             width=25,
             height=25,
-            bg="lightgray",
-            activebackground="lightgray",
             command=self.redo,
         )
         self.btn_redo.grid(row=0, column=3, padx=(0, 20), sticky="e")
@@ -205,21 +209,16 @@ class MyApp:
             self.frm_search,
             text="Replace",
             width=15,
-            background="lightgray",
             command=self.replace_words,
-            activebackground="lightgray",
             font=self.btn_font2,
         )
         self.btn_replace_word.grid(row=0, column=4, padx=(0, 5), sticky="e")
 
-        self.ent_new_word = tk.Entry(
-            self.frm_search, background="lightgray", font=self.ent_font
-        )
+        self.ent_new_word = tk.Entry(self.frm_search, font=self.ent_font)
         self.ent_new_word.grid(row=0, column=5, padx=(0, 15), sticky="ew")
 
         self.txt_text = tk.Text(
             self.root,
-            background="lightgray",
             wrap=tk.WORD,
             relief=tk.SUNKEN,
             borderwidth=5,
@@ -228,6 +227,61 @@ class MyApp:
         self.txt_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 
         self.txt_text.tag_config("light", background="yellow")
+
+    def set_theme_color(self, theme: str = None, first_start: bool = False) -> None:
+        """Set colors for an app."""
+        if first_start:
+            with open(f"{self.base_dir}/app_settings.json", "r", encoding="utf-8") as f:
+                theme = json.load(f)["theme"]
+
+        if theme == "Midnight":
+            self.theme_color1 = "gray"
+            self.theme_color2 = "lightgray"
+        elif theme == "Night":
+            self.theme_color1 = "#1B2A49"
+            self.theme_color2 = "#4A6A9D"
+        elif theme == "Light":
+            self.theme_color1 = "#D1C4E9"
+            self.theme_color2 = "#EDE7F6"
+
+        for key, value in self.support_themes.items():
+            value.set(theme == key)
+        with open(f"{self.base_dir}/app_settings.json", "w", encoding="utf-8") as f:
+            json.dump({"theme": theme}, f)
+        self.set_widget_colors()
+
+    def set_widget_colors(self):
+        """Set colors for widgets."""
+        self.root.config(bg=self.theme_color1)
+        for name, button in self.buttons.items():
+            if self.obj_text and (
+                self.obj_text.case_sensitive
+                or self.obj_text.smart_mode
+                or self.obj_text.root_mode
+            ):
+                if name in ("Smart mode", "Case sens", "Root mode"):
+                    continue
+            button.config(bg=self.theme_color2, activebackground=self.theme_color2)
+
+        self.frm_load_file.config(bg=self.theme_color1)
+        self.frm_command.config(bg=self.theme_color1)
+        self.frm_search.config(bg=self.theme_color1)
+        self.txt_log_command.config(bg=self.theme_color2)
+        self.txt_text.config(bg=self.theme_color2)
+        self.lab_path_to_file.config(bg=self.theme_color2)
+        self.btn_load_file.config(
+            bg=self.theme_color2, activebackground=self.theme_color2
+        )
+        self.btn_search_word.config(
+            bg=self.theme_color2, activebackground=self.theme_color2
+        )
+        self.btn_replace_word.config(
+            bg=self.theme_color2, activebackground=self.theme_color2
+        )
+        self.btn_redo.config(bg=self.theme_color2, activebackground=self.theme_color2)
+        self.btn_undo.config(bg=self.theme_color2, activebackground=self.theme_color2)
+        self.ent_search_word.config(bg=self.theme_color2)
+        self.ent_new_word.config(bg=self.theme_color2)
 
     def undo(self):
         """
@@ -504,11 +558,21 @@ class MyApp:
         """
         self.ent_new_word.delete(0, tk.END)
         self.ent_search_word.delete(0, tk.END)
-        self.buttons["Case sens"].config(bg="lightgray", activebackground="lightgray")
-        self.buttons["Smart mode"].config(bg="lightgray", activebackground="lightgray")
-        self.buttons["Root mode"].config(bg="lightgray", activebackground="lightgray")
-        self.buttons["To json"].config(bg="lightgray", activebackground="lightgray")
-        self.buttons["To pickle"].config(bg="lightgray", activebackground="lightgray")
+        self.buttons["Case sens"].config(
+            bg=self.theme_color2, activebackground=self.theme_color2
+        )
+        self.buttons["Smart mode"].config(
+            bg=self.theme_color2, activebackground=self.theme_color2
+        )
+        self.buttons["Root mode"].config(
+            bg=self.theme_color2, activebackground=self.theme_color2
+        )
+        self.buttons["To json"].config(
+            bg=self.theme_color2, activebackground=self.theme_color2
+        )
+        self.buttons["To pickle"].config(
+            bg=self.theme_color2, activebackground=self.theme_color2
+        )
         self.txt_text.delete("1.0", tk.END)
 
     def if_error_load_file(self, file_path):
