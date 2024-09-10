@@ -268,7 +268,8 @@ class MyApp:
         self.frm_search.config(bg=self.theme_color1)
         self.txt_log_command.config(bg=self.theme_color2)
         self.txt_text.config(bg=self.theme_color2)
-        self.lab_path_to_file.config(bg=self.theme_color2)
+        if self.lab_path_to_file.cget("bg") not in (self.soft_red, self.soft_green):
+            self.lab_path_to_file.config(bg=self.theme_color2)
         self.btn_load_file.config(
             bg=self.theme_color2, activebackground=self.theme_color2
         )
