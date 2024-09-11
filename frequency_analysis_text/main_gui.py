@@ -178,6 +178,7 @@ class MyApp:
 
         self.ent_search_word = tk.Entry(self.frm_search, font=self.ent_font)
         self.ent_search_word.grid(row=0, column=1, padx=(0, 20), sticky="we")
+        self.ent_search_word.bind("<Return>", lambda event: self.search())
 
         im = Image.open(f"{self.base_dir}/undo.png").resize((20, 20))
         self.undo_icon = ImageTk.PhotoImage(image=im)
@@ -216,6 +217,7 @@ class MyApp:
 
         self.ent_new_word = tk.Entry(self.frm_search, font=self.ent_font)
         self.ent_new_word.grid(row=0, column=5, padx=(0, 15), sticky="ew")
+        self.ent_new_word.bind("<Return>", lambda event: self.replace_words())
 
         self.txt_text = tk.Text(
             self.root,
